@@ -30,10 +30,10 @@ export async function saveUser(user: UserData) {
     `;
     await connection.execute(sql, [user.uid, user.email, user.name, user.avatar]);
     return { success: true };
-  } catch (error) {
+  } catch (error: any) {
     console.error('Lỗi lưu người dùng vào CSDL:', error);
-    // Trong môi trường production, bạn không nên trả về chi tiết lỗi
-    return { success: false, error: 'Không thể lưu thông tin người dùng.' };
+    // Trả về lỗi chi tiết để gỡ lỗi phía client
+    return { success: false, error: `Lỗi CSDL: ${error.message}` };
   }
   finally {
     if (connection) {
