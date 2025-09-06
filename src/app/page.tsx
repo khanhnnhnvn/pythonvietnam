@@ -30,22 +30,22 @@ export default async function Home() {
           </div>
           <div className="relative z-10">
             <h1 className="text-4xl font-bold tracking-tighter text-primary sm:text-5xl md:text-6xl">
-              Chào mừng đến với Python Vietnam
+              Cộng đồng Python Việt Nam
             </h1>
             <p className="mx-auto mt-4 max-w-[700px] text-lg text-foreground/80 md:text-xl">
-              Nơi chia sẻ kiến thức, kinh nghiệm và cơ hội việc làm cho cộng đồng lập trình viên Python tại Việt Nam.
+              Nơi kết nối, chia sẻ kiến thức và tìm kiếm cơ hội việc làm Python. Khám phá blog công nghệ và tham gia cùng hàng ngàn lập trình viên.
             </p>
             <div className="mt-6 flex justify-center gap-4">
               <Button asChild size="lg">
                 <Link href="/blog">
                   <BookOpen className="mr-2 h-5 w-5" />
-                  Khám phá bài viết
+                  Khám phá Blog
                 </Link>
               </Button>
               <Button asChild size="lg" variant="secondary">
                 <Link href="/jobs">
                   <Briefcase className="mr-2 h-5 w-5" />
-                  Tìm việc làm
+                  Tìm việc làm Python
                 </Link>
               </Button>
             </div>
@@ -55,9 +55,9 @@ export default async function Home() {
 
       <section className="container py-8 md:py-12">
         <div className="flex flex-col items-center text-center">
-          <h2 className="text-3xl font-bold tracking-tighter sm:text-4xl">Bài viết Mới nhất</h2>
+          <h2 className="text-3xl font-bold tracking-tighter sm:text-4xl">Blog Công nghệ Mới nhất</h2>
           <p className="mt-2 max-w-[600px] text-foreground/70">
-            Cập nhật những bài viết, hướng dẫn và chia sẻ mới nhất từ cộng đồng.
+            Cập nhật những bài viết, hướng dẫn và chia sẻ mới nhất từ cộng đồng Python Việt Nam.
           </p>
         </div>
         <div className="mt-8 grid gap-6 md:grid-cols-2 lg:grid-cols-3">
@@ -77,9 +77,9 @@ export default async function Home() {
       <section className="w-full bg-primary/10 py-8 md:py-12">
         <div className="container">
           <div className="flex flex-col items-center text-center">
-            <h2 className="text-3xl font-bold tracking-tighter sm:text-4xl">Cơ hội Việc làm</h2>
+            <h2 className="text-3xl font-bold tracking-tighter sm:text-4xl">Việc làm Python Nổi bật</h2>
             <p className="mt-2 max-w-[600px] text-foreground/70">
-              Những vị trí đang tuyển dụng hấp dẫn trong hệ sinh thái Python.
+              Những vị trí đang tuyển dụng hấp dẫn trong hệ sinh thái Python dành cho bạn.
             </p>
           </div>
           <div className="mt-8 grid gap-6 md:grid-cols-2">

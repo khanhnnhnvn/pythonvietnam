@@ -6,8 +6,8 @@ import Header from '@/components/common/Header';
 import { PT_Sans, Be_Vietnam_Pro } from 'next/font/google';
 
 export const metadata: Metadata = {
-  title: 'Python Vietnam',
-  description: 'Cộng đồng Python cho người Việt',
+  title: 'Python Vietnam | Cộng đồng Python & Việc làm',
+  description: 'Khám phá cộng đồng Python Việt Nam. Tìm kiếm việc làm Python, đọc blog công nghệ, và tham gia cùng các lập trình viên trên toàn quốc.',
 };
 
 const beVietnamPro = Be_Vietnam_Pro({

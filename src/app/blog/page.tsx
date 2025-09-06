@@ -1,11 +1,12 @@
+
 import { blogCategories } from "@/lib/data";
 import BlogPostCard from "@/components/blog/BlogPostCard";
 import BlogCategoryFilter from "@/components/blog/BlogCategoryFilter";
 import { getPosts } from "../actions";
 
 export const metadata = {
-  title: "Bài viết | Python Vietnam",
-  description: "Khám phá các bài viết, hướng dẫn và chia sẻ kiến thức về Python.",
+  title: "Blog Công nghệ Python | Python Vietnam",
+  description: "Khám phá blog công nghệ của cộng đồng Python Việt Nam. Các bài viết, hướng dẫn và chia sẻ kiến thức chuyên sâu về Python.",
 };
 
 export default async function BlogPage({
@@ -24,7 +25,7 @@ export default async function BlogPage({
   return (
     <div className="container py-8 md:py-12">
       <div className="mb-8 flex flex-col items-center text-center">
-        <h1 className="text-3xl font-bold tracking-tighter sm:text-4xl">Góc chia sẻ</h1>
+        <h1 className="text-3xl font-bold tracking-tighter sm:text-4xl">Blog Công nghệ</h1>
         <p className="mt-2 max-w-2xl text-muted-foreground">
           Khám phá các bài viết, hướng dẫn và chia sẻ kiến thức về Python từ cộng đồng.
           Chọn một danh mục để bắt đầu.

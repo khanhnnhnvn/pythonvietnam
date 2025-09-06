@@ -7,8 +7,8 @@ import type { Job } from "@/lib/types";
 import { getJobs } from "../actions";
 
 export const metadata = {
-  title: "Việc làm | Python Vietnam",
-  description: "Tìm kiếm cơ hội việc làm trong ngành Python tại Việt Nam.",
+  title: "Việc làm Python | Python Vietnam",
+  description: "Tìm kiếm cơ hội việc làm Python mới nhất từ các công ty hàng đầu tại Việt Nam. Nền tảng tuyển dụng dành riêng cho cộng đồng Python Việt Nam.",
 };
 
 export default async function JobsPage({
@@ -37,9 +37,9 @@ export default async function JobsPage({
   return (
     <div className="container py-8 md:py-12">
       <div className="mb-8 space-y-2">
-        <h1 className="text-3xl font-bold tracking-tighter sm:text-4xl">Tìm kiếm Việc làm</h1>
+        <h1 className="text-3xl font-bold tracking-tighter sm:text-4xl">Việc làm Python</h1>
         <p className="text-muted-foreground">
-          Khám phá {allJobs.length} cơ hội việc làm đang chờ bạn.
+          Khám phá {allJobs.length} cơ hội việc làm Python đang chờ bạn.
         </p>
       </div>
       <JobSearchFilters />
