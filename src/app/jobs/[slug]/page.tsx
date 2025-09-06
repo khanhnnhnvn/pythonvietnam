@@ -63,7 +63,7 @@ export default async function JobDetailPage({ params }: { params: { slug: string
                         </div>
                     </div>
                     <div className="w-full shrink-0 md:w-auto">
-                        <Button className="w-full bg-accent text-accent-foreground hover:bg-accent/90 md:w-auto">Nộp đơn ngay</Button>
+                        <Button className="w-full bg-accent text-accent-foreground hover:bg-accent/90 md:w-auto">Ứng tuyển</Button>
                     </div>
                 </CardHeader>
                 <CardContent>
