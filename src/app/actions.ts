@@ -5,7 +5,6 @@ import type { BlogPost, Job, PostFormData, JobFormData, ApplicationFormData, App
 import mysql from 'mysql2/promise';
 import fs from 'node:fs/promises';
 import path from 'node:path';
-import { getServerSideUser } from '@/lib/firebase-admin';
 import { getUserById as getAppUserById } from '@/app/actions';
 
 type UserData = {
@@ -152,15 +151,6 @@ export async function getPostBySlug(slug: string): Promise<BlogPost | null> {
 }
 
 export async function createPost(data: PostFormData) {
-    const user = await getServerSideUser();
-    if (!user) {
-        return { success: false, error: 'Unauthorized: You must be logged in to create a post.' };
-    }
-    const appUser = await getAppUserById(user.uid);
-     if (appUser?.role !== 'admin') {
-        return { success: false, error: 'Permission denied.' };
-    }
-
     let connection;
     try {
         connection = await mysql.createConnection(dbConfig);
@@ -181,15 +171,6 @@ export async function createPost(data: PostFormData) {
 }
 
 export async function updatePost(id: number, data: PostFormData) {
-    const user = await getServerSideUser();
-    if (!user) {
-        return { success: false, error: 'Unauthorized' };
-    }
-    const appUser = await getAppUserById(user.uid);
-     if (appUser?.role !== 'admin') {
-        return { success: false, error: 'Permission denied.' };
-    }
-
     let connection;
     try {
         connection = await mysql.createConnection(dbConfig);
@@ -210,15 +191,6 @@ export async function updatePost(id: number, data: PostFormData) {
 }
 
 export async function deletePost(id: number) {
-    const user = await getServerSideUser();
-    if (!user) {
-        return { success: false, error: 'Unauthorized' };
-    }
-    const appUser = await getAppUserById(user.uid);
-     if (appUser?.role !== 'admin') {
-        return { success: false, error: 'Permission denied.' };
-    }
-
     let connection;
     try {
         connection = await mysql.createConnection(dbConfig);
@@ -279,19 +251,6 @@ export async function getJobs(forAdminPage = false): Promise<Job[]> {
         `;
         const params: (string | number)[] = [];
 
-        if (forAdminPage) {
-            const user = await getServerSideUser();
-            if (user) {
-                const appUser = await getAppUserById(user.uid);
-                if (appUser?.role !== 'admin') {
-                    sql += ' WHERE j.user_id = ?';
-                    params.push(user.uid);
-                }
-            } else {
-                return []; // Not logged in, cannot see admin jobs page
-            }
-        }
-
         sql += `
             GROUP BY j.id
             ORDER BY j.created_at DESC
@@ -343,15 +302,6 @@ export async function getJobBySlug(slug: string): Promise<Job | null> {
 }
 
 export async function createJob(data: JobFormData) {
-    const user = await getServerSideUser();
-    if (!user) {
-        return { success: false, error: 'Unauthorized: You must be logged in to create a job.' };
-    }
-     const appUser = await getAppUserById(user.uid);
-     if (appUser?.role !== 'admin') {
-        return { success: false, error: 'Permission denied.' };
-    }
-
     let connection;
     try {
         connection = await mysql.createConnection(dbConfig);
@@ -359,7 +309,7 @@ export async function createJob(data: JobFormData) {
             INSERT INTO jobs (user_id, title, slug, company, location, type, category, description, companyLogoUrl, companyLogoHint)
             VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?);
         `;
-        await connection.execute(sql, [user.uid, data.title, data.slug, data.company, data.location, data.type, data.category, data.description, data.companyLogoUrl, data.companyLogoHint]);
+        await connection.execute(sql, [data.user_id, data.title, data.slug, data.company, data.location, data.type, data.category, data.description, data.companyLogoUrl, data.companyLogoHint]);
         return { success: true };
     } catch (error: any) {
         console.error('Failed to create job:', error);
@@ -372,22 +322,12 @@ export async function createJob(data: JobFormData) {
 }
 
 export async function updateJob(id: number, data: JobFormData) {
-    const user = await getServerSideUser();
-    if (!user) {
-        return { success: false, error: 'Unauthorized' };
-    }
-
     let connection;
     try {
         connection = await mysql.createConnection(dbConfig);
         const jobToUpdate = await getJobById(id);
         if (!jobToUpdate) {
             return { success: false, error: 'Job not found.' };
-        }
-
-        const appUser = await getAppUserById(user.uid);
-        if (appUser?.role !== 'admin' && jobToUpdate.user_id !== user.uid) {
-            return { success: false, error: 'Permission denied.' };
         }
         
         const sql = `
@@ -407,11 +347,6 @@ export async function updateJob(id: number, data: JobFormData) {
 }
 
 export async function deleteJob(id: number) {
-     const user = await getServerSideUser();
-    if (!user) {
-        return { success: false, error: 'Unauthorized' };
-    }
-    
     let connection;
     try {
         connection = await mysql.createConnection(dbConfig);
@@ -419,11 +354,6 @@ export async function deleteJob(id: number) {
         const jobToDelete = await getJobById(id);
         if (!jobToDelete) {
              return { success: false, error: 'Job not found.' };
-        }
-
-        const appUser = await getAppUserById(user.uid);
-        if (appUser?.role !== 'admin' && jobToDelete.user_id !== user.uid) {
-            return { success: false, error: 'Permission denied.' };
         }
 
         await connection.execute('DELETE FROM jobs WHERE id = ?', [id]);
@@ -440,11 +370,6 @@ export async function deleteJob(id: number) {
 
 // Application Actions
 export async function getApplicationsByJobId(jobId: number): Promise<Application[]> {
-    const user = await getServerSideUser();
-    if (!user) {
-        return [];
-    }
-
     let connection;
     try {
         connection = await mysql.createConnection(dbConfig);
@@ -452,10 +377,6 @@ export async function getApplicationsByJobId(jobId: number): Promise<Application
         const job = await getJobById(jobId);
         if (!job) {
             throw new Error("Job not found");
-        }
-        const appUser = await getAppUserById(user.uid);
-        if (appUser?.role !== 'admin' && job.user_id !== user.uid) {
-             throw new Error("Permission denied to view applications for this job.");
         }
 
         const [rows] = await connection.execute<mysql.RowDataPacket[]>('SELECT * FROM applications WHERE job_id = ? ORDER BY created_at DESC', [jobId]);

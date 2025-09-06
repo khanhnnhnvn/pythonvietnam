@@ -1,3 +1,4 @@
+
 "use client";
 
 import { useState, useEffect } from "react";
@@ -73,8 +74,9 @@ export default function AuthButton({ user: initialUser }: AuthButtonProps) {
     setIsLoading(true);
     const provider = new GoogleAuthProvider();
     try {
-      await signInWithPopup(auth, provider);
-      // onAuthStateChanged sẽ tự động xử lý việc cập nhật state và lưu user
+      const result = await signInWithPopup(auth, provider);
+      const idToken = await result.user.getIdToken();
+       // After sign-in, onAuthStateChanged will handle user state.
     } catch(error) {
         console.error("Authentication error:", error);
         toast({
@@ -90,7 +92,7 @@ export default function AuthButton({ user: initialUser }: AuthButtonProps) {
     setIsLoading(true);
     try {
         await signOut(auth);
-        // onAuthStateChanged sẽ xử lý việc cập nhật user state thành null
+        // onAuthStateChanged will handle user state update to null
     } catch (e) {
         toast({
             variant: "destructive",
@@ -98,7 +100,7 @@ export default function AuthButton({ user: initialUser }: AuthButtonProps) {
             description: "Đã có lỗi xảy ra trong quá trình đăng xuất.",
         });
     } finally {
-      // setIsLoading sẽ được set thành false trong onAuthStateChanged
+        setIsLoading(false);
     }
   }
 
