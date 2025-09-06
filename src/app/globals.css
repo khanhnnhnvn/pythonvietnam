@@ -1,3 +1,5 @@
+
+@import 'react-quill/dist/quill.snow.css';
 @tailwind base;
 @tailwind components;
 @tailwind utilities;
@@ -62,4 +64,16 @@
   body {
     @apply bg-background text-foreground;
   }
+}
+
+@layer components {
+    .ql-toolbar {
+        @apply rounded-t-md border-input;
+    }
+    .ql-container {
+        @apply rounded-b-md border-input;
+    }
+    .ql-editor {
+        @apply min-h-[150px] text-base md:text-sm;
+    }
 }

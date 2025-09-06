@@ -1,3 +1,4 @@
+
 import type {Config} from 'tailwindcss';
 
 export default {
@@ -17,7 +18,7 @@ export default {
     },
     extend: {
       fontFamily: {
-        body: ['PT Sans', 'sans-serif'],
+        body: ['var(--font-body)', 'sans-serif'],
         headline: ['PT Sans', 'sans-serif'],
         code: ['monospace'],
       },
@@ -100,7 +101,32 @@ export default {
         'accordion-down': 'accordion-down 0.2s ease-out',
         'accordion-up': 'accordion-up 0.2s ease-out',
       },
+       typography: ({ theme }: { theme: any }) => ({
+        DEFAULT: {
+          css: {
+            '--tw-prose-body': theme('colors.foreground / 1'),
+            '--tw-prose-headings': theme('colors.primary / 1'),
+            '--tw-prose-lead': theme('colors.foreground / 1'),
+            '--tw-prose-links': theme('colors.accent / 1'),
+            '--tw-prose-bold': theme('colors.foreground / 1'),
+            '--tw-prose-counters': theme('colors.muted-foreground / 1'),
+            '--tw-prose-bullets': theme('colors.muted-foreground / 1'),
+            '--tw-prose-hr': theme('colors.border / 1'),
+            '--tw-prose-quotes': theme('colors.foreground / 1'),
+            '--tw-prose-quote-borders': theme('colors.border / 1'),
+            '--tw-prose-captions': theme('colors.muted-foreground / 1'),
+            '--tw-prose-code': theme('colors.primary / 1'),
+            '--tw-prose-pre-code': theme('colors.primary / 1'),
+            '--tw-prose-pre-bg': theme('colors.muted / 1'),
+            '--tw-prose-th-borders': theme('colors.border / 1'),
+            '--tw-prose-td-borders': theme('colors.border / 1'),
+          },
+        },
+      }),
     },
   },
-  plugins: [require('tailwindcss-animate')],
+  plugins: [
+    require('tailwindcss-animate'),
+    require('@tailwindcss/typography'),
+  ],
 } satisfies Config;

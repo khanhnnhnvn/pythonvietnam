@@ -1,3 +1,4 @@
+
 import { getJobBySlug, getJobs } from "@/app/actions";
 import { notFound } from "next/navigation";
 import Image from "next/image";
@@ -74,9 +75,10 @@ export default async function JobDetailPage({ params }: { params: { slug: string
                 <CardContent>
                     <div className="space-y-4">
                         <h2 className="text-xl font-bold text-primary">Mô tả công việc</h2>
-                        <div className="whitespace-pre-line text-foreground">
-                            {job.description}
-                        </div>
+                         <div
+                            className="prose prose-sm max-w-none text-foreground dark:prose-invert [&_ul]:list-disc [&_ul]:pl-6 [&_ol]:list-decimal [&_ol]:pl-6"
+                            dangerouslySetInnerHTML={{ __html: job.description }}
+                        />
                     </div>
                 </CardContent>
             </Card>

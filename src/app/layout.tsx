@@ -1,12 +1,21 @@
+
 import type { Metadata } from 'next';
 import './globals.css';
 import { Toaster } from '@/components/ui/toaster';
 import Header from '@/components/common/Header';
+import { Be_Vietnam_Pro } from 'next/font/google'
 
 export const metadata: Metadata = {
   title: 'Python Vietnam',
   description: 'Cộng đồng Python cho người Việt',
 };
+
+const beVietnamPro = Be_Vietnam_Pro({
+  subsets: ['vietnamese'],
+  weight: ['400', '500', '600', '700'],
+  variable: '--font-body',
+});
+
 
 export default function RootLayout({
   children,
@@ -14,7 +23,7 @@ export default function RootLayout({
   children: React.ReactNode;
 }>) {
   return (
-    <html lang="vi">
+    <html lang="vi" className={beVietnamPro.variable}>
       <head>
         <link rel="preconnect" href="https://fonts.googleapis.com" />
         <link rel="preconnect" href="https://fonts.gstatic.com" crossOrigin="anonymous" />
