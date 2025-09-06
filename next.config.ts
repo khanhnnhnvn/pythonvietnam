@@ -1,3 +1,4 @@
+
 import type {NextConfig} from 'next';
 
 const nextConfig: NextConfig = {
@@ -34,7 +35,7 @@ const nextConfig: NextConfig = {
   // server is proxied in the editor.
   // In a production deployment, this should be removed.
   experimental: {},
-  allowedDevOrigins: ['https://*.cloudworkstations.dev'],
+  allowedDevOrigins: ['https://*.cloudworkstations.dev', 'https://*.firebase.studio'],
 };
 
 export default nextConfig;
