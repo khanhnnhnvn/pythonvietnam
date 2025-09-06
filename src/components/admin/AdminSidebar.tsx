@@ -3,17 +3,22 @@
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
 import { cn } from '@/lib/utils';
-import { Code2, Home, Newspaper, Briefcase } from 'lucide-react';
+import { Code2, Home, Newspaper, Briefcase, User } from 'lucide-react';
 import { Button } from '@/components/ui/button';
+import { useAuth } from '@/hooks/useAuth';
 
 export const navLinks = [
-  { href: '/admin', label: 'Tổng quan', icon: Home },
-  { href: '/admin/posts', label: 'Bài viết', icon: Newspaper },
-  { href: '/admin/jobs', label: 'Việc làm', icon: Briefcase },
+  { href: '/admin', label: 'Tổng quan', icon: Home, roles: ['admin'] },
+  { href: '/admin/posts', label: 'Bài viết', icon: Newspaper, roles: ['admin'] },
+  { href: '/admin/jobs', label: 'Việc làm (Admin)', icon: Briefcase, roles: ['admin'] },
+  { href: '/admin/my-jobs', label: 'Việc làm đã đăng', icon: Briefcase, roles: ['employer'] },
 ];
 
 export default function AdminSidebar() {
   const pathname = usePathname();
+  const { user } = useAuth();
+
+  const accessibleLinks = navLinks.filter(link => user?.role && link.roles.includes(user.role));
 
   return (
     <div className="hidden border-r bg-background md:block">
@@ -21,12 +26,12 @@ export default function AdminSidebar() {
         <div className="flex h-14 items-center border-b px-4 lg:h-[60px] lg:px-6">
           <Link href="/admin" className="flex items-center gap-2 font-semibold">
             <Code2 className="h-6 w-6 text-primary" />
-            <span className="">Admin Panel</span>
+            <span className="">Dashboard</span>
           </Link>
         </div>
         <div className="flex-1">
           <nav className="grid items-start px-2 text-sm font-medium lg:px-4">
-            {navLinks.map(({ href, label, icon: Icon }) => (
+            {accessibleLinks.map(({ href, label, icon: Icon }) => (
               <Link
                 key={href}
                 href={href}

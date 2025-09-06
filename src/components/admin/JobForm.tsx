@@ -110,7 +110,8 @@ export default function JobForm({ job }: JobFormProps) {
           title: job ? "Cập nhật thành công!" : "Tạo thành công!",
           description: "Tin tuyển dụng của bạn đã được lưu.",
         });
-        router.push("/admin/jobs");
+        const redirectUrl = user?.role === 'admin' ? '/admin/jobs' : '/admin/my-jobs';
+        router.push(redirectUrl);
         router.refresh();
       } else {
         throw new Error(result.error);

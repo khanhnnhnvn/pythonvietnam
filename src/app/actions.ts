@@ -239,7 +239,8 @@ export async function uploadFile(formData: FormData) {
 
 
 // Job Actions
-export async function getJobs(forAdminPage = false): Promise<Job[]> {
+export async function getJobs(params: { forAdminPage?: boolean, userId?: string } = {}): Promise<Job[]> {
+    const { forAdminPage = false, userId } = params;
     let connection;
     try {
         connection = await mysql.createConnection(dbConfig);
@@ -249,14 +250,19 @@ export async function getJobs(forAdminPage = false): Promise<Job[]> {
             FROM jobs j
             LEFT JOIN applications a ON j.id = a.job_id
         `;
-        const params: (string | number)[] = [];
+        const queryParams: (string | number)[] = [];
+
+        if (userId) {
+            sql += ` WHERE j.user_id = ?`;
+            queryParams.push(userId);
+        }
 
         sql += `
             GROUP BY j.id
             ORDER BY j.created_at DESC
         `;
 
-        const [rows] = await connection.execute<mysql.RowDataPacket[]>(sql, params);
+        const [rows] = await connection.execute<mysql.RowDataPacket[]>(sql, queryParams);
         return rows as Job[];
     } catch (error) {
         console.error('Failed to fetch jobs:', error);
