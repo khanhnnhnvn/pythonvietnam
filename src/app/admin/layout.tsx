@@ -34,10 +34,8 @@ export default function AdminLayout({
     const unsubscribe = onAuthStateChanged(auth, async (firebaseUser: User | null) => {
       if (firebaseUser) {
         const appUser = await getUserById(firebaseUser.uid);
-        // Allow both admin and regular users to access the admin area
-        // Specific permissions will be handled on each page
-        if (!appUser) {
-             router.push('/');
+        if (!appUser || appUser.role !== 'admin') {
+           router.push('/');
         } else {
           setUser(appUser);
           setLoading(false);
@@ -58,24 +56,6 @@ export default function AdminLayout({
     );
   }
   
-  // Admin can see everything. Non-admins have restrictions handled on the pages.
-   if (user.role !== 'admin') {
-      const nonAdminAllowedPaths = ['/admin/jobs', '/admin/jobs/new'];
-      const currentPath = window.location.pathname;
-      const isAllowed = nonAdminAllowedPaths.some(path => currentPath.startsWith(path)) || currentPath === '/admin';
-      
-      if (!isAllowed && !currentPath.match(/^\/admin\/jobs\/\d+(\/edit|\/applicants)?$/)) {
-          router.push('/admin/jobs');
-          return (
-             <div className="flex h-screen w-full items-center justify-center bg-background">
-                <LoaderCircle className="h-8 w-8 animate-spin" />
-                <p>Redirecting...</p>
-             </div>
-          );
-      }
-  }
-
-
   return (
     <html lang="vi">
       <body className="font-body antialiased">
@@ -90,7 +70,6 @@ export default function AdminLayout({
                   </div>
                 </SidebarHeader>
                 <SidebarMenu>
-                  {user.role === 'admin' && (
                     <SidebarMenuItem>
                         <SidebarMenuButton asChild>
                         <Link href="/admin">
@@ -99,8 +78,6 @@ export default function AdminLayout({
                         </Link>
                         </SidebarMenuButton>
                     </SidebarMenuItem>
-                  )}
-                  {user.role === 'admin' && (
                      <SidebarMenuItem>
                         <SidebarMenuButton asChild>
                         <Link href="/admin/posts">
@@ -109,15 +86,6 @@ export default function AdminLayout({
                         </Link>
                         </SidebarMenuButton>
                     </SidebarMenuItem>
-                  )}
-                  <SidebarMenuItem>
-                    <SidebarMenuButton asChild>
-                      <Link href="/admin/jobs">
-                        <Briefcase />
-                        Việc làm
-                      </Link>
-                    </SidebarMenuButton>
-                  </SidebarMenuItem>
                 </SidebarMenu>
               </SidebarContent>
             </Sidebar>
