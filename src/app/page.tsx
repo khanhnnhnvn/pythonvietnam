@@ -3,12 +3,14 @@ import Link from "next/link";
 import { ArrowRight, Briefcase, BookOpen } from "lucide-react";
 
 import { Button } from "@/components/ui/button";
-import { blogPosts, jobs } from "@/lib/data";
+import { jobs } from "@/lib/data";
 import BlogPostCard from "@/components/blog/BlogPostCard";
 import JobCard from "@/components/jobs/JobCard";
+import { getPosts } from "./actions";
 
-export default function Home() {
-  const latestPosts = blogPosts.slice(0, 3);
+export default async function Home() {
+  const allPosts = await getPosts();
+  const latestPosts = allPosts.slice(0, 3);
   const featuredJobs = jobs.slice(0, 2);
 
   return (

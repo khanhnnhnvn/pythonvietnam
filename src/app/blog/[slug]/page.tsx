@@ -1,18 +1,19 @@
 import { notFound } from "next/navigation";
 import Image from "next/image";
-import { blogPosts } from "@/lib/data";
 import { Badge } from "@/components/ui/badge";
 import { Calendar, User } from "lucide-react";
 import BlogPostSummary from "@/components/blog/BlogPostSummary";
+import { getPostBySlug, getPosts } from "@/app/actions";
 
 export async function generateStaticParams() {
-  return blogPosts.map((post) => ({
+  const posts = await getPosts();
+  return posts.map((post) => ({
     slug: post.slug,
   }));
 }
 
 export async function generateMetadata({ params }: { params: { slug: string } }) {
-  const post = blogPosts.find((p) => p.slug === params.slug);
+  const post = await getPostBySlug(params.slug);
   if (!post) {
     return {
       title: "Không tìm thấy bài viết",
@@ -24,8 +25,8 @@ export async function generateMetadata({ params }: { params: { slug: string } })
   };
 }
 
-export default function BlogPostPage({ params }: { params: { slug: string } }) {
-  const post = blogPosts.find((p) => p.slug === params.slug);
+export default async function BlogPostPage({ params }: { params: { slug: string } }) {
+  const post = await getPostBySlug(params.slug);
 
   if (!post) {
     notFound();

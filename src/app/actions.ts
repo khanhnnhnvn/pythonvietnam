@@ -1,5 +1,6 @@
 'use server';
 
+import type { BlogPost, Job, PostFormData } from '@/lib/types';
 import mysql from 'mysql2/promise';
 
 type UserData = {
@@ -17,6 +18,7 @@ const dbConfig = {
   database: process.env.DB_DATABASE,
 };
 
+// User Actions
 export async function saveUser(user: UserData) {
   let connection;
   try {
@@ -33,10 +35,8 @@ export async function saveUser(user: UserData) {
     return { success: true };
   } catch (error: any) {
     console.error('Lỗi lưu người dùng vào CSDL:', error);
-    // Trả về lỗi chi tiết để gỡ lỗi phía client
     return { success: false, error: `Lỗi CSDL: ${error.message}` };
-  }
-  finally {
+  } finally {
     if (connection) {
       await connection.end();
     }
@@ -67,4 +67,114 @@ export async function getUserById(userId: string): Promise<UserData | null> {
       await connection.end();
     }
   }
+}
+
+// Post Actions
+export async function getPosts(): Promise<BlogPost[]> {
+    let connection;
+    try {
+        connection = await mysql.createConnection(dbConfig);
+        const [rows] = await connection.execute<mysql.RowDataPacket[]>('SELECT *, DATE_FORMAT(created_at, "%Y-%m-%d") as date FROM posts ORDER BY created_at DESC');
+        return rows as BlogPost[];
+    } catch (error) {
+        console.error('Failed to fetch posts:', error);
+        return [];
+    } finally {
+        if (connection) {
+            await connection.end();
+        }
+    }
+}
+
+export async function getPostById(id: number): Promise<BlogPost | null> {
+    let connection;
+    try {
+        connection = await mysql.createConnection(dbConfig);
+        const [rows] = await connection.execute<mysql.RowDataPacket[]>('SELECT *, DATE_FORMAT(created_at, "%Y-%m-%d") as date FROM posts WHERE id = ?', [id]);
+        return rows.length > 0 ? rows[0] as BlogPost : null;
+    } catch (error) {
+        console.error(`Failed to fetch post with id ${id}:`, error);
+        return null;
+    } finally {
+        if (connection) {
+            await connection.end();
+        }
+    }
+}
+
+export async function getPostBySlug(slug: string): Promise<BlogPost | null> {
+    let connection;
+    try {
+        connection = await mysql.createConnection(dbConfig);
+        const [rows] = await connection.execute<mysql.RowDataPacket[]>('SELECT *, DATE_FORMAT(created_at, "%Y-%m-%d") as date FROM posts WHERE slug = ?', [slug]);
+        return rows.length > 0 ? rows[0] as BlogPost : null;
+    } catch (error) {
+        console.error(`Failed to fetch post with slug ${slug}:`, error);
+        return null;
+    } finally {
+        if (connection) {
+            await connection.end();
+        }
+    }
+}
+
+export async function createPost(data: PostFormData) {
+    let connection;
+    try {
+        connection = await mysql.createConnection(dbConfig);
+        const sql = `
+            INSERT INTO posts (slug, title, author, category, description, imageUrl, imageHint, content)
+            VALUES (?, ?, ?, ?, ?, ?, ?, ?);
+        `;
+        await connection.execute(sql, [data.slug, data.title, data.author, data.category, data.description, data.imageUrl, data.imageHint, data.content]);
+        return { success: true };
+    } catch (error: any) {
+        console.error('Failed to create post:', error);
+        return { success: false, error: `Database Error: ${error.message}` };
+    } finally {
+        if (connection) {
+            await connection.end();
+        }
+    }
+}
+
+export async function updatePost(id: number, data: PostFormData) {
+    let connection;
+    try {
+        connection = await mysql.createConnection(dbConfig);
+        const sql = `
+            UPDATE posts SET slug = ?, title = ?, author = ?, category = ?, description = ?, imageUrl = ?, imageHint = ?, content = ?
+            WHERE id = ?;
+        `;
+        await connection.execute(sql, [data.slug, data.title, data.author, data.category, data.description, data.imageUrl, data.imageHint, data.content, id]);
+        return { success: true };
+    } catch (error: any) {
+        console.error('Failed to update post:', error);
+        return { success: false, error: `Database Error: ${error.message}` };
+    } finally {
+        if (connection) {
+            await connection.end();
+        }
+    }
+}
+
+export async function deletePost(id: number) {
+    let connection;
+    try {
+        connection = await mysql.createConnection(dbConfig);
+        await connection.execute('DELETE FROM posts WHERE id = ?', [id]);
+        return { success: true };
+    } catch (error: any) {
+        console.error('Failed to delete post:', error);
+        return { success: false, error: `Database Error: ${error.message}` };
+    } finally {
+        if (connection) {
+            await connection.end();
+        }
+    }
+}
+
+// Job Actions (Placeholder)
+export async function getJobs(): Promise<Job[]> {
+    return []; // Replace with DB query
 }

@@ -1,18 +1,21 @@
-import { blogPosts, blogCategories } from "@/lib/data";
+import { blogCategories } from "@/lib/data";
 import BlogPostCard from "@/components/blog/BlogPostCard";
 import BlogCategoryFilter from "@/components/blog/BlogCategoryFilter";
+import { getPosts } from "../actions";
 
 export const metadata = {
   title: "Bài viết | Python Vietnam",
   description: "Khám phá các bài viết, hướng dẫn và chia sẻ kiến thức về Python.",
 };
 
-export default function BlogPage({
+export default async function BlogPage({
   searchParams,
 }: {
   searchParams: { [key: string]: string | undefined };
 }) {
   const category = searchParams.category;
+
+  const blogPosts = await getPosts();
 
   const filteredPosts = category && category !== 'all'
     ? blogPosts.filter((post) => post.category === category)
