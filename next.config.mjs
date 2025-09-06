@@ -29,9 +29,6 @@ const nextConfig = {
       },
     ],
   },
-  // The value below is a workaround for development given that the
-  // server is proxied in the editor.
-  // In a production deployment, this should be removed.
   experimental: {},
   allowedDevOrigins: ['https://*.cloudworkstations.dev', 'https://*.firebase.studio'],
 };
