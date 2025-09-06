@@ -10,7 +10,7 @@ import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuLabel,
 import DeleteJobDialog from "./_components/DeleteJobDialog";
 import type { Job } from "@/lib/types";
 
-// Define AppUser type for the props
+// Define AppUser type for the props, passed from layout
 type AppUser = {
   uid: string;
   email?: string;
@@ -20,17 +20,18 @@ type AppUser = {
 };
 
 interface AdminJobsPageProps {
-  user?: AppUser; // User is passed from layout
+  user?: AppUser;
 }
 
 export default async function AdminJobsPage({ user }: AdminJobsPageProps) {
-  // Pass true to getJobs to enable permission checks on the server
+  // Pass true to getJobs to enable permission checks on the server.
+  // The server will return all jobs for admins, and only user-specific jobs for others.
   const jobsToDisplay = await getJobs(true);
   
   const appUser = user;
 
-  // The `canManageJob` logic is now implicitly handled on the server,
-  // but we can keep it for enabling/disabling UI elements as a secondary check.
+  // This client-side check determines if the action buttons should be enabled.
+  // The ultimate security check is still on the server-side actions.
   const canManageJob = (job: Job) => {
     if (!appUser) return false;
     // Admin can manage any job

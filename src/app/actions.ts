@@ -6,6 +6,7 @@ import mysql from 'mysql2/promise';
 import fs from 'node:fs/promises';
 import path from 'node:path';
 import { getServerSideUser } from '@/lib/firebase-admin';
+import { getUserById as getAppUserById } from '@/app/actions';
 
 type UserData = {
   uid: string;
@@ -78,8 +79,19 @@ export async function getPosts(): Promise<BlogPost[]> {
     let connection;
     try {
         connection = await mysql.createConnection(dbConfig);
-        const [rows] = await connection.execute<mysql.RowDataPacket[]>('SELECT *, DATE_FORMAT(created_at, "%Y-%m-%d") as date FROM posts ORDER BY created_at DESC');
-        return rows as BlogPost[];
+        const [rows] = await connection.execute<mysql.RowDataPacket[]>('SELECT * FROM posts ORDER BY created_at DESC');
+        
+        // Format the date for each post
+        const formattedRows = rows.map(post => ({
+            ...post,
+            date: new Date(post.created_at).toLocaleDateString('vi-VN', {
+                year: 'numeric',
+                month: '2-digit',
+                day: '2-digit'
+            })
+        }));
+
+        return formattedRows as BlogPost[];
     } catch (error) {
         console.error('Failed to fetch posts:', error);
         return [];
@@ -94,8 +106,17 @@ export async function getPostById(id: number): Promise<BlogPost | null> {
     let connection;
     try {
         connection = await mysql.createConnection(dbConfig);
-        const [rows] = await connection.execute<mysql.RowDataPacket[]>('SELECT *, DATE_FORMAT(created_at, "%Y-%m-%d") as date FROM posts WHERE id = ?', [id]);
-        return rows.length > 0 ? rows[0] as BlogPost : null;
+        const [rows] = await connection.execute<mysql.RowDataPacket[]>('SELECT * FROM posts WHERE id = ?', [id]);
+        if (rows.length === 0) return null;
+        
+        const post = rows[0];
+        post.date = new Date(post.created_at).toLocaleDateString('vi-VN', {
+            year: 'numeric',
+            month: '2-digit',
+            day: '2-digit'
+        });
+
+        return post as BlogPost;
     } catch (error) {
         console.error(`Failed to fetch post with id ${id}:`, error);
         return null;
@@ -110,8 +131,17 @@ export async function getPostBySlug(slug: string): Promise<BlogPost | null> {
     let connection;
     try {
         connection = await mysql.createConnection(dbConfig);
-        const [rows] = await connection.execute<mysql.RowDataPacket[]>('SELECT *, DATE_FORMAT(created_at, "%Y-%m-%d") as date FROM posts WHERE slug = ?', [slug]);
-        return rows.length > 0 ? rows[0] as BlogPost : null;
+        const [rows] = await connection.execute<mysql.RowDataPacket[]>('SELECT * FROM posts WHERE slug = ?', [slug]);
+        if (rows.length === 0) return null;
+        
+        const post = rows[0];
+        post.date = new Date(post.created_at).toLocaleDateString('vi-VN', {
+            year: 'numeric',
+            month: '2-digit',
+            day: '2-digit'
+        });
+
+        return post as BlogPost;
     } catch (error) {
         console.error(`Failed to fetch post with slug ${slug}:`, error);
         return null;
@@ -229,12 +259,13 @@ export async function getJobs(forAdminPage: boolean = false): Promise<Job[]> {
             if (!user) {
                 return []; // Not logged in, can't see any jobs on admin page
             }
-            const appUser = await getUserById(user.uid);
+            const appUser = await getAppUserById(user.uid);
+            // If user is not an admin, only show their own jobs
             if (appUser?.role !== 'admin') {
                 sql += ' WHERE j.user_id = ?';
                 params.push(user.uid);
             }
-            // Admins will not have the WHERE clause, getting all jobs
+            // Admins will not have the WHERE clause, thus getting all jobs
         }
 
         sql += `
@@ -326,7 +357,7 @@ export async function updateJob(id: number, data: JobFormData) {
             return { success: false, error: 'Job not found.' };
         }
 
-        const appUser = await getUserById(user.uid);
+        const appUser = await getAppUserById(user.uid);
         if (appUser?.role !== 'admin' && jobToUpdate.user_id !== user.uid) {
             return { success: false, error: 'Permission denied.' };
         }
@@ -362,7 +393,7 @@ export async function deleteJob(id: number) {
              return { success: false, error: 'Job not found.' };
         }
 
-        const appUser = await getUserById(user.uid);
+        const appUser = await getAppUserById(user.uid);
         if (appUser?.role !== 'admin' && jobToDelete.user_id !== user.uid) {
             return { success: false, error: 'Permission denied.' };
         }
@@ -395,7 +426,7 @@ export async function getApplicationsByJobId(jobId: number): Promise<Application
         if (!job) {
             throw new Error("Job not found");
         }
-        const appUser = await getUserById(user.uid);
+        const appUser = await getAppUserById(user.uid);
         if (appUser?.role !== 'admin' && job.user_id !== user.uid) {
              throw new Error("Permission denied to view applications for this job.");
         }
@@ -432,7 +463,3 @@ export async function createApplication(data: ApplicationFormData) {
         }
     }
 }
-
-
-
-    
