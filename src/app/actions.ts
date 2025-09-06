@@ -1,8 +1,13 @@
 'use server';
 
-import { cookies } from 'next/headers';
-import { admin } from '@/lib/firebase-admin';
 import mysql from 'mysql2/promise';
+
+type UserData = {
+  uid: string;
+  email?: string;
+  name?: string | null;
+  avatar?: string;
+};
 
 const dbConfig = {
   host: process.env.DB_HOST,
@@ -11,7 +16,7 @@ const dbConfig = {
   database: process.env.DB_DATABASE,
 };
 
-async function saveUserToDb(user: { uid: string; email: string | undefined; name: string | null; avatar: string | undefined; }) {
+export async function saveUser(user: UserData) {
   let connection;
   try {
     connection = await mysql.createConnection(dbConfig);
@@ -24,41 +29,15 @@ async function saveUserToDb(user: { uid: string; email: string | undefined; name
         last_login_at = NOW();
     `;
     await connection.execute(sql, [user.uid, user.email, user.name, user.avatar]);
-  } finally {
+    return { success: true };
+  } catch (error) {
+    console.error('Lỗi lưu người dùng vào CSDL:', error);
+    // Trong môi trường production, bạn không nên trả về chi tiết lỗi
+    return { success: false, error: 'Không thể lưu thông tin người dùng.' };
+  }
+  finally {
     if (connection) {
       await connection.end();
     }
   }
-}
-
-export async function createSession(idToken: string) {
-  try {
-    const decodedToken = await admin.auth().verifyIdToken(idToken);
-    const expiresIn = 60 * 60 * 24 * 5 * 1000; // 5 days
-    const sessionCookie = await admin.auth().createSessionCookie(idToken, { expiresIn });
-
-    const user = {
-        uid: decodedToken.uid,
-        email: decodedToken.email,
-        name: decodedToken.name || null,
-        avatar: decodedToken.picture || undefined,
-    };
-    
-    await saveUserToDb(user);
-
-    cookies().set('session', sessionCookie, {
-      maxAge: expiresIn,
-      httpOnly: true,
-      secure: process.env.NODE_ENV === 'production',
-    });
-    
-    return { success: true };
-  } catch (error) {
-    console.error('Error creating session:', error);
-    return { success: false, error: 'Failed to create session.' };
-  }
-}
-
-export async function clearSession() {
-  cookies().delete('session');
 }

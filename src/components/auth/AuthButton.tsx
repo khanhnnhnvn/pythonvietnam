@@ -3,7 +3,7 @@
 import { useState, useEffect } from "react";
 import { GoogleAuthProvider, signInWithPopup, onAuthStateChanged, User } from "firebase/auth";
 import { auth } from "@/lib/firebase";
-import { createSession, clearSession } from "@/app/actions";
+import { saveUser } from "@/app/actions";
 import { Button } from "@/components/ui/button";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import {
@@ -17,33 +17,23 @@ import {
 import { LogIn, LogOut, LoaderCircle } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 
-async function signInWithGoogle() {
-  const provider = new GoogleAuthProvider();
-  try {
-    const result = await signInWithPopup(auth, provider);
-    const idToken = await result.user.getIdToken();
-    const response = await createSession(idToken);
-    if (!response.success) {
-        throw new Error('Failed to create session');
-    }
-  } catch (error) {
-    console.error("Authentication error:", error);
-    throw error;
-  }
-}
-
-async function signOut() {
-    await auth.signOut();
-    await clearSession();
-}
-
 export default function AuthButton() {
   const [user, setUser] = useState<User | null>(null);
   const [isLoading, setIsLoading] = useState(true);
   const { toast } = useToast();
 
   useEffect(() => {
-    const unsubscribe = onAuthStateChanged(auth, (user) => {
+    const unsubscribe = onAuthStateChanged(auth, async (user) => {
+      if (user) {
+        // Lưu người dùng vào DB mỗi khi trạng thái thay đổi (ví dụ: tải lại trang)
+        // để cập nhật last_login_at
+        await saveUser({
+            uid: user.uid,
+            email: user.email ?? undefined,
+            name: user.displayName,
+            avatar: user.photoURL ?? undefined,
+        });
+      }
       setUser(user);
       setIsLoading(false);
     });
@@ -52,10 +42,12 @@ export default function AuthButton() {
 
   const handleSignIn = async () => {
     setIsLoading(true);
+    const provider = new GoogleAuthProvider();
     try {
-        await signInWithGoogle();
-        // The onAuthStateChanged listener will handle the user state update
-    } catch(e) {
+      const result = await signInWithPopup(auth, provider);
+      // onAuthStateChanged sẽ tự động xử lý việc cập nhật state và lưu user
+    } catch(error) {
+        console.error("Authentication error:", error);
         toast({
             variant: "destructive",
             title: "Đăng nhập thất bại",
@@ -68,7 +60,8 @@ export default function AuthButton() {
   const handleSignOut = async () => {
     setIsLoading(true);
     try {
-        await signOut();
+        await auth.signOut();
+        // onAuthStateChanged sẽ xử lý việc cập nhật user state thành null
     } catch (e) {
         toast({
             variant: "destructive",
@@ -76,7 +69,7 @@ export default function AuthButton() {
             description: "Đã có lỗi xảy ra trong quá trình đăng xuất.",
         });
     } finally {
-        setIsLoading(false);
+        // setIsLoading sẽ được set thành false trong onAuthStateChanged
     }
   }
 
