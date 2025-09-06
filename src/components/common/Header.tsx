@@ -3,7 +3,7 @@
 
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import { Code2, BookOpen, Briefcase, Menu, ShieldCheck, LayoutDashboard } from "lucide-react";
+import { Code2, BookOpen, Briefcase, Menu, ShieldCheck, LayoutDashboard, PlusCircle } from "lucide-react";
 import { useState, useEffect } from "react";
 import { onAuthStateChanged } from "firebase/auth";
 import { auth } from "@/lib/firebase";
@@ -13,6 +13,7 @@ import { Button } from "@/components/ui/button";
 import { Sheet, SheetContent, SheetTrigger } from "@/components/ui/sheet";
 import { cn } from "@/lib/utils";
 import AuthButton from "../auth/AuthButton";
+import { DropdownMenuItem, DropdownMenuSeparator } from "../ui/dropdown-menu";
 
 type AppUser = {
   uid: string;
@@ -65,6 +66,24 @@ export default function Header() {
   }
 
   const showDashboardLink = currentUser?.role === 'admin' || currentUser?.role === 'employer';
+  const showRegistrationLink = currentUser && currentUser.role === 'user';
+
+
+  const AuthButtonWithExtraItems = () => (
+    <AuthButton user={currentUser}>
+        {showRegistrationLink && (
+             <>
+                <DropdownMenuSeparator />
+                <DropdownMenuItem asChild className="cursor-pointer">
+                    <Link href="/register-employer">
+                        <PlusCircle className="mr-2 h-4 w-4" />
+                        <span>Đăng ký tuyển dụng</span>
+                    </Link>
+                </DropdownMenuItem>
+            </>
+        )}
+    </AuthButton>
+  )
 
   return (
     <header className="sticky top-0 z-50 w-full border-b bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60">
@@ -97,10 +116,10 @@ export default function Header() {
           )}
         </nav>
         <div className="ml-auto hidden items-center gap-2 md:flex">
-          <AuthButton user={currentUser}/>
+          <AuthButtonWithExtraItems />
         </div>
         <div className="flex flex-1 items-center justify-end md:hidden">
-           <AuthButton user={currentUser}/>
+           <AuthButtonWithExtraItems />
           <Sheet open={isMobileMenuOpen} onOpenChange={setIsMobileMenuOpen}>
             <SheetTrigger asChild>
               <Button variant="ghost" size="icon">

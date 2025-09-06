@@ -81,3 +81,26 @@ export const applicationFormSchema = z.object({
 });
 
 export type ApplicationFormData = z.infer<typeof applicationFormSchema>;
+
+export const employerApplicationFormSchema = z.object({
+    user_id: z.string().min(1, { message: "User ID is required." }),
+    company_name: z.string().min(2, { message: "Tên công ty là bắt buộc." }),
+    website: z.string().url({ message: "Vui lòng nhập một URL hợp lệ." }).optional().or(z.literal('')),
+    company_introduction: z.string().min(20, { message: "Giới thiệu công ty phải có ít nhất 20 ký tự." }),
+    contact_info: z.string().min(5, { message: "Thông tin liên hệ là bắt buộc." }),
+});
+
+export type EmployerApplicationFormData = z.infer<typeof employerApplicationFormSchema>;
+
+export interface EmployerApplication {
+  id: number;
+  user_id: string;
+  user_name: string;
+  user_email: string;
+  company_name: string;
+  website: string | null;
+  company_introduction: string;
+  contact_info: string;
+  status: 'pending' | 'approved' | 'rejected';
+  created_at: string;
+}

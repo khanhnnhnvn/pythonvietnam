@@ -1,7 +1,7 @@
 
 'use server';
 
-import type { BlogPost, Job, PostFormData, JobFormData, ApplicationFormData, Application } from '@/lib/types';
+import type { BlogPost, Job, PostFormData, JobFormData, ApplicationFormData, Application, EmployerApplicationFormData, EmployerApplication } from '@/lib/types';
 import mysql from 'mysql2/promise';
 import fs from 'node:fs/promises';
 import path from 'node:path';
@@ -408,6 +408,91 @@ export async function createApplication(data: ApplicationFormData) {
         return { success: true };
     } catch (error: any) {
         console.error('Failed to create application:', error);
+        return { success: false, error: `Database Error: ${error.message}` };
+    } finally {
+        if (connection) {
+            await connection.end();
+        }
+    }
+}
+
+
+// Employer Application Actions
+export async function createEmployerApplication(data: EmployerApplicationFormData) {
+    let connection;
+    try {
+        connection = await mysql.createConnection(dbConfig);
+        const sql = `
+            INSERT INTO employer_applications (user_id, company_name, website, company_introduction, contact_info)
+            VALUES (?, ?, ?, ?, ?);
+        `;
+        await connection.execute(sql, [data.user_id, data.company_name, data.website, data.company_introduction, data.contact_info]);
+        return { success: true };
+    } catch (error: any) {
+        console.error('Failed to create employer application:', error);
+        return { success: false, error: `Database Error: ${error.message}` };
+    } finally {
+        if (connection) {
+            await connection.end();
+        }
+    }
+}
+
+export async function getEmployerApplications(): Promise<EmployerApplication[]> {
+    let connection;
+    try {
+        connection = await mysql.createConnection(dbConfig);
+        const sql = `
+            SELECT ea.*, u.name as user_name, u.email as user_email
+            FROM employer_applications ea
+            JOIN users u ON ea.user_id = u.id
+            ORDER BY ea.created_at DESC
+        `;
+        const [rows] = await connection.execute<mysql.RowDataPacket[]>(sql);
+        return rows as EmployerApplication[];
+    } catch (error) {
+        console.error('Failed to fetch employer applications:', error);
+        return [];
+    } finally {
+        if (connection) {
+            await connection.end();
+        }
+    }
+}
+
+export async function approveEmployerApplication(applicationId: number, userId: string) {
+    let connection;
+    try {
+        connection = await mysql.createConnection(dbConfig);
+        await connection.beginTransaction();
+
+        // Update application status
+        await connection.execute('UPDATE employer_applications SET status = ? WHERE id = ?', ['approved', applicationId]);
+        
+        // Update user role
+        await connection.execute('UPDATE users SET role = ? WHERE id = ?', ['employer', userId]);
+
+        await connection.commit();
+        return { success: true };
+    } catch (error: any) {
+        if (connection) await connection.rollback();
+        console.error('Failed to approve employer application:', error);
+        return { success: false, error: `Database Error: ${error.message}` };
+    } finally {
+        if (connection) {
+            await connection.end();
+        }
+    }
+}
+
+export async function rejectEmployerApplication(applicationId: number) {
+    let connection;
+    try {
+        connection = await mysql.createConnection(dbConfig);
+        await connection.execute('UPDATE employer_applications SET status = ? WHERE id = ?', ['rejected', applicationId]);
+        return { success: true };
+    } catch (error: any) {
+        console.error('Failed to reject employer application:', error);
         return { success: false, error: `Database Error: ${error.message}` };
     } finally {
         if (connection) {

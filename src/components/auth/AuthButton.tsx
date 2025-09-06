@@ -28,9 +28,10 @@ type AppUser = {
 
 interface AuthButtonProps {
     user?: AppUser | null;
+    children?: React.ReactNode;
 }
 
-export default function AuthButton({ user: initialUser }: AuthButtonProps) {
+export default function AuthButton({ user: initialUser, children }: AuthButtonProps) {
   const [user, setUser] = useState<AppUser | null | undefined>(initialUser);
   const [isLoading, setIsLoading] = useState(true);
   const { toast } = useToast();
@@ -138,12 +139,13 @@ export default function AuthButton({ user: initialUser }: AuthButtonProps) {
             <p className="text-xs leading-none text-muted-foreground">{user.email}</p>
           </div>
         </DropdownMenuLabel>
+        {children}
         <DropdownMenuSeparator />
         <DropdownMenuItem onClick={() => window.location.reload()} className="cursor-pointer">
           <span>Tải lại trang</span>
         </DropdownMenuItem>
-        <DropdownMenuItem onClick={handleSignOut} className="cursor-pointer">
-          <LogOut className="mr-2" />
+        <DropdownMenuItem onClick={handleSignOut} className="cursor-pointer text-destructive focus:text-destructive">
+          <LogOut className="mr-2 h-4 w-4" />
           <span>Đăng xuất</span>
         </DropdownMenuItem>
       </DropdownMenuContent>

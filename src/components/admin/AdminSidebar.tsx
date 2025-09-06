@@ -3,14 +3,15 @@
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
 import { cn } from '@/lib/utils';
-import { Code2, Home, Newspaper, Briefcase, User, LayoutDashboard } from 'lucide-react';
+import { Code2, Home, Newspaper, Briefcase, User, LayoutDashboard, FileText } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { useAuth } from '@/hooks/useAuth';
 
 export const navLinks = [
-  { href: '/admin', label: 'Dashboard', icon: LayoutDashboard, roles: ['admin'] },
+  { href: '/admin', label: 'Dashboard', icon: LayoutDashboard, roles: ['admin', 'employer'] },
   { href: '/admin/posts', label: 'Bài viết', icon: Newspaper, roles: ['admin'] },
   { href: '/admin/jobs', label: 'Tất cả việc làm', icon: Briefcase, roles: ['admin'] },
+  { href: '/admin/applications', label: 'Đơn tuyển dụng', icon: FileText, roles: ['admin'] },
   { href: '/admin/my-jobs', label: 'Việc làm đã đăng', icon: Briefcase, roles: ['employer'] },
 ];
 
