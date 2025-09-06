@@ -30,9 +30,6 @@ const nextConfig: NextConfig = {
       },
     ],
   },
-  serverActions: {
-    bodySizeLimit: '4mb', // Increase body size limit for file uploads
-  },
   // The value below is a workaround for development given that the
   // server is proxied in the editor.
   // In a production deployment, this should be removed.
