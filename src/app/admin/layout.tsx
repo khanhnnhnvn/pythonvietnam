@@ -16,9 +16,10 @@ export default async function AdminLayout({
   }
 
   const appUser = await getUserById(user.uid);
-  if (appUser?.role !== 'admin') {
-    redirect('/');
-  }
+  // TAM THOI VÔ HIỆU HÓA KIỂM TRA ADMIN ĐỂ DEBUG
+  // if (appUser?.role !== 'admin') {
+  //   redirect('/');
+  // }
 
   return (
     <div className="grid min-h-screen w-full md:grid-cols-[220px_1fr] lg:grid-cols-[280px_1fr]">
@@ -32,5 +33,3 @@ export default async function AdminLayout({
     </div>
   );
 }
-
-    
