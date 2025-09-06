@@ -460,6 +460,33 @@ export async function getEmployerApplications(): Promise<EmployerApplication[]> 
     }
 }
 
+export async function getEmployerApplicationByUserId(userId: string): Promise<EmployerApplication | null> {
+    let connection;
+    try {
+        connection = await mysql.createConnection(dbConfig);
+        const sql = `
+            SELECT ea.*, u.name as user_name, u.email as user_email
+            FROM employer_applications ea
+            JOIN users u ON ea.user_id = u.id
+            WHERE ea.user_id = ?
+            ORDER BY ea.created_at DESC
+            LIMIT 1
+        `;
+        const [rows]: any[] = await connection.execute(sql, [userId]);
+        if (rows.length > 0) {
+            return rows[0] as EmployerApplication;
+        }
+        return null;
+    } catch (error) {
+        console.error('Failed to fetch employer application by user id:', error);
+        return null;
+    } finally {
+        if (connection) {
+            await connection.end();
+        }
+    }
+}
+
 export async function approveEmployerApplication(applicationId: number, userId: string) {
     let connection;
     try {

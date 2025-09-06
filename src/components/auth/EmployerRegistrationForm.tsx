@@ -5,8 +5,8 @@ import { useState, useEffect } from "react";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { useRouter } from "next/navigation";
-import { createEmployerApplication } from "@/app/actions";
-import { employerApplicationFormSchema, type EmployerApplicationFormData } from "@/lib/types";
+import { createEmployerApplication, getEmployerApplicationByUserId } from "@/app/actions";
+import { employerApplicationFormSchema, type EmployerApplicationFormData, type EmployerApplication } from "@/lib/types";
 import { useToast } from "@/hooks/use-toast";
 import { useAuth } from "@/hooks/useAuth";
 import { Button } from "@/components/ui/button";
@@ -20,7 +20,7 @@ import {
 } from "@/components/ui/form";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
-import { LoaderCircle, Send } from "lucide-react";
+import { LoaderCircle, Send, FileCheck2, Clock, XCircle } from "lucide-react";
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 
 export default function EmployerRegistrationForm() {
@@ -28,6 +28,8 @@ export default function EmployerRegistrationForm() {
   const { toast } = useToast();
   const { user, isLoading: isAuthLoading } = useAuth();
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const [isLoading, setIsLoading] = useState(true);
+  const [existingApplication, setExistingApplication] = useState<EmployerApplication | null>(null);
 
   const form = useForm<EmployerApplicationFormData>({
     resolver: zodResolver(employerApplicationFormSchema),
@@ -41,10 +43,16 @@ export default function EmployerRegistrationForm() {
   });
 
   useEffect(() => {
-    if (user && !form.getValues('user_id')) {
-      form.setValue('user_id', user.uid);
-    }
-     if (!isAuthLoading && !user) {
+    if (user) {
+      if (!form.getValues('user_id')) {
+        form.setValue('user_id', user.uid);
+      }
+      // Check for existing application
+      setIsLoading(true);
+      getEmployerApplicationByUserId(user.uid)
+        .then(setExistingApplication)
+        .finally(() => setIsLoading(false));
+    } else if (!isAuthLoading) {
       toast({
         variant: "destructive",
         title: "Yêu cầu đăng nhập",
@@ -63,7 +71,8 @@ export default function EmployerRegistrationForm() {
           title: "Gửi đơn thành công!",
           description: "Yêu cầu của bạn đã được gửi đi. Chúng tôi sẽ xem xét và phản hồi sớm.",
         });
-        router.push('/');
+        // Refetch the application to update the status on screen
+        getEmployerApplicationByUserId(data.user_id).then(setExistingApplication);
       } else {
         throw new Error(result.error);
       }
@@ -78,7 +87,7 @@ export default function EmployerRegistrationForm() {
     }
   };
   
-  if (isAuthLoading) {
+  if (isAuthLoading || isLoading) {
       return (
          <div className="flex h-64 items-center justify-center">
             <LoaderCircle className="h-8 w-8 animate-spin" />
@@ -86,16 +95,55 @@ export default function EmployerRegistrationForm() {
       )
   }
   
-  if (user && user.role !== 'user') {
+  if (user && user.role === 'admin') {
       return (
           <Alert>
               <AlertTitle>Thông báo</AlertTitle>
               <AlertDescription>
-                  Tài khoản của bạn đã được cấp quyền {user.role === 'admin' ? 'Quản trị viên' : 'Nhà tuyển dụng'}. Bạn không cần thực hiện thao tác này.
+                  Tài khoản của bạn là Quản trị viên, không cần thực hiện thao tác này.
               </AlertDescription>
           </Alert>
       )
   }
+  
+  if (user && user.role === 'employer') {
+      return (
+          <Alert variant="default" className="border-green-500">
+              <FileCheck2 className="h-4 w-4 text-green-500"/>
+              <AlertTitle>Đã được phê duyệt</AlertTitle>
+              <AlertDescription>
+                  Tài khoản của bạn đã được cấp quyền Nhà tuyển dụng. Bạn có thể bắt đầu <Button variant="link" className="p-0 h-auto" asChild><a href="/admin/jobs/new">đăng tin tuyển dụng</a></Button> ngay bây giờ.
+              </AlertDescription>
+          </Alert>
+      )
+  }
+
+  if (existingApplication) {
+      if (existingApplication.status === 'pending') {
+          return (
+             <Alert variant="default" className="border-yellow-500">
+                <Clock className="h-4 w-4 text-yellow-500"/>
+                <AlertTitle>Đang chờ duyệt</AlertTitle>
+                <AlertDescription>
+                    Bạn đã gửi một đơn đăng ký vào ngày {new Date(existingApplication.created_at).toLocaleDateString('vi-VN')}. 
+                    Chúng tôi đang xem xét và sẽ phản hồi trong thời gian sớm nhất.
+                </AlertDescription>
+            </Alert>
+          )
+      }
+      if (existingApplication.status === 'rejected') {
+          return (
+             <Alert variant="destructive">
+                <XCircle className="h-4 w-4"/>
+                <AlertTitle>Đơn đăng ký bị từ chối</AlertTitle>
+                <AlertDescription>
+                   Rất tiếc, đơn đăng ký của bạn đã không được chấp thuận. Vui lòng liên hệ với chúng tôi để biết thêm chi tiết.
+                </AlertDescription>
+            </Alert>
+          )
+      }
+  }
+
 
   return (
     <Form {...form}>

@@ -22,7 +22,7 @@ import { Badge } from "@/components/ui/badge";
 import { getEmployerApplications, approveEmployerApplication, rejectEmployerApplication } from "@/app/actions";
 import type { EmployerApplication } from "@/lib/types";
 import { useToast } from "@/hooks/use-toast";
-import { LoaderCircle, CheckCircle, XCircle } from "lucide-react";
+import { LoaderCircle, CheckCircle, XCircle, Eye } from "lucide-react";
 import {
   AlertDialog,
   AlertDialogAction,
@@ -86,6 +86,57 @@ export default function AdminEmployerApplicationsPage() {
         return <Badge variant="secondary">Đang chờ</Badge>;
     }
   };
+  
+  const ActionDialog = ({ application }: { application: EmployerApplication}) => (
+      <AlertDialog>
+        <AlertDialogTrigger asChild>
+          <Button variant="ghost" size="icon">
+            <Eye className="h-4 w-4" />
+            <span className="sr-only">Xem chi tiết</span>
+          </Button>
+        </AlertDialogTrigger>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>{application.company_name}</AlertDialogTitle>
+            <AlertDialogDescription>
+              Đơn đăng ký được gửi bởi <strong>{application.user_name}</strong> ({application.user_email})
+              vào ngày {new Date(application.created_at).toLocaleDateString('vi-VN')}.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <div className="space-y-4 max-h-[60vh] overflow-y-auto pr-6 text-sm">
+            <div>
+              <h4 className="font-semibold">Website</h4>
+              <a href={application.website || '#'} target="_blank" rel="noopener noreferrer" className="text-primary hover:underline">
+                {application.website || 'Không cung cấp'}
+              </a>
+            </div>
+            <div>
+              <h4 className="font-semibold">Thông tin liên hệ</h4>
+              <p className="text-muted-foreground">{application.contact_info}</p>
+            </div>
+            <div>
+              <h4 className="font-semibold">Giới thiệu công ty</h4>
+              <p className="text-muted-foreground whitespace-pre-wrap">{application.company_introduction}</p>
+            </div>
+          </div>
+          <AlertDialogFooter>
+            <AlertDialogCancel>Đóng</AlertDialogCancel>
+             {application.status === 'pending' && (
+                <>
+                 <Button variant="destructive" onClick={() => handleReject(application.id)} disabled={isProcessing === application.id}>
+                    {isProcessing === application.id ? <LoaderCircle className="h-4 w-4 animate-spin"/> : <XCircle className="h-4 w-4"/>}
+                    <span className="ml-2">Từ chối</span>
+                </Button>
+                 <Button onClick={() => handleApprove(application.id, application.user_id)} disabled={isProcessing === application.id}>
+                    {isProcessing === application.id ? <LoaderCircle className="h-4 w-4 animate-spin"/> : <CheckCircle className="h-4 w-4"/>}
+                    <span className="ml-2">Duyệt</span>
+                </Button>
+                </>
+             )}
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
+  )
 
   if (isLoading) {
       return (
@@ -129,40 +180,21 @@ export default function AdminEmployerApplicationsPage() {
                   <TableCell>{new Date(app.created_at).toLocaleDateString('vi-VN')}</TableCell>
                    <TableCell>{getStatusBadge(app.status)}</TableCell>
                   <TableCell className="text-right">
-                    {app.status === 'pending' ? (
-                       <div className="flex justify-end gap-2">
-                            <Button variant="outline" size="sm" onClick={() => handleApprove(app.id, app.user_id)} disabled={isProcessing === app.id}>
-                                {isProcessing === app.id ? <LoaderCircle className="h-4 w-4 animate-spin"/> : <CheckCircle className="h-4 w-4"/>}
-                                <span className="ml-2 hidden sm:inline">Duyệt</span>
-                            </Button>
-                             <Button variant="destructive" size="sm" onClick={() => handleReject(app.id)} disabled={isProcessing === app.id}>
-                                {isProcessing === app.id ? <LoaderCircle className="h-4 w-4 animate-spin"/> : <XCircle className="h-4 w-4"/>}
-                                <span className="ml-2 hidden sm:inline">Từ chối</span>
-                            </Button>
-                       </div>
-                    ) : (
-                        <AlertDialog>
-                            <AlertDialogTrigger asChild>
-                                <Button variant="ghost" size="sm">Xem chi tiết</Button>
-                            </AlertDialogTrigger>
-                            <AlertDialogContent>
-                                <AlertDialogHeader>
-                                    <AlertDialogTitle>{app.company_name}</AlertDialogTitle>
-                                    <AlertDialogDescription>
-                                        Đơn đăng ký được gửi bởi <strong>{app.user_name}</strong> ({app.user_email})
-                                    </AlertDialogDescription>
-                                </AlertDialogHeader>
-                                <div className="space-y-4 max-h-[60vh] overflow-y-auto pr-6">
-                                    <p><strong>Giới thiệu công ty:</strong></p>
-                                    <p className="text-sm text-muted-foreground whitespace-pre-wrap">{app.company_introduction}</p>
-                                    <p><strong>Thông tin liên hệ:</strong> {app.contact_info}</p>
-                                </div>
-                                <AlertDialogFooter>
-                                    <AlertDialogCancel>Đóng</AlertDialogCancel>
-                                </AlertDialogFooter>
-                            </AlertDialogContent>
-                        </AlertDialog>
-                    )}
+                    <div className="flex items-center justify-end gap-2">
+                        <ActionDialog application={app} />
+                         {app.status === 'pending' && (
+                             <>
+                                <Button variant="outline" size="sm" onClick={() => handleApprove(app.id, app.user_id)} disabled={isProcessing === app.id} className="hidden sm:flex">
+                                    {isProcessing === app.id ? <LoaderCircle className="h-4 w-4 animate-spin"/> : <CheckCircle className="h-4 w-4"/>}
+                                    <span className="ml-2">Duyệt</span>
+                                </Button>
+                                 <Button variant="destructive" size="sm" onClick={() => handleReject(app.id)} disabled={isProcessing === app.id} className="hidden sm:flex">
+                                    {isProcessing === app.id ? <LoaderCircle className="h-4 w-4 animate-spin"/> : <XCircle className="h-4 w-4"/>}
+                                    <span className="ml-2">Từ chối</span>
+                                </Button>
+                             </>
+                         )}
+                    </div>
                   </TableCell>
                 </TableRow>
               ))
