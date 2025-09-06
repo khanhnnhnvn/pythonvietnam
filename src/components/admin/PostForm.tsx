@@ -22,8 +22,9 @@ import {
 } from "@/components/ui/form";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
-import { LoaderCircle, Sparkles, Wand2 } from "lucide-react";
+import { LoaderCircle, Wand2 } from "lucide-react";
 import Image from "next/image";
+import RichTextEditor from "../common/RichTextEditor";
 
 interface PostFormProps {
   post?: BlogPost;
@@ -82,7 +83,7 @@ export default function PostForm({ post }: PostFormProps) {
           form.setValue("slug", generateSlug(blogPost.title));
           form.setValue("description", blogPost.description);
           form.setValue("category", blogPost.category);
-          form.setValue("content", blogPost.content);
+          form.setValue("content", blogPost.content, { shouldValidate: true });
           form.setValue("imageUrl", imageDataUri);
 
           // Set preview for the generated image
@@ -120,7 +121,7 @@ export default function PostForm({ post }: PostFormProps) {
     setIsSubmitting(true);
 
     try {
-      let imageUrl = post?.imageUrl ?? "";
+      let imageUrl = data.imageUrl ?? post?.imageUrl ?? "";
 
       if (imageFile) {
         const formData = new FormData();
@@ -132,7 +133,7 @@ export default function PostForm({ post }: PostFormProps) {
           throw new Error(uploadResult.error || "Tải ảnh lên thất bại.");
         }
       } else if (imagePreview && imagePreview.startsWith('data:')) {
-          // Handle AI-generated image
+          // Handle AI-generated image that hasn't been uploaded
           imageUrl = imagePreview;
       }
 
@@ -259,11 +260,7 @@ export default function PostForm({ post }: PostFormProps) {
             <FormItem>
               <FormLabel>Nội dung</FormLabel>
               <FormControl>
-                <Textarea
-                  placeholder="Nội dung đầy đủ của bài viết (hỗ trợ HTML)..."
-                  {...field}
-                  rows={15}
-                />
+                 <RichTextEditor {...field} />
               </FormControl>
               <FormMessage />
             </FormItem>
@@ -322,6 +319,3 @@ export default function PostForm({ post }: PostFormProps) {
     </Form>
   );
 }
-
-
-    

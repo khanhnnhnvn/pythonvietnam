@@ -46,7 +46,7 @@ export default async function BlogPostPage({ params }: { params: { slug: string 
           </div>
           <div className="flex items-center gap-2">
             <Calendar className="h-4 w-4" />
-            <time dateTime={post.date}>{post.date}</time>
+            <time dateTime={new Date(post.created_at).toISOString()}>{post.date}</time>
           </div>
         </div>
       </div>
@@ -64,7 +64,7 @@ export default async function BlogPostPage({ params }: { params: { slug: string 
       <BlogPostSummary blogPostContent={post.content} />
 
       <div
-        className="mx-auto mt-8 max-w-none text-lg leading-relaxed text-foreground [&_h2]:mt-8 [&_h2]:mb-4 [&_h2]:text-2xl [&_h2]:font-bold [&_h2]:text-primary [&_h3]:mt-6 [&_h3]:mb-3 [&_h3]:text-xl [&_h3]:font-bold [&_p]:mb-4 [&_a]:text-accent [&_a]:underline hover:[&_a]:no-underline [&_ul]:list-disc [&_ul]:pl-6 [&_ul]:mb-4 [&_ol]:list-decimal [&_ol]:pl-6 [&_ol]:mb-4 [&_li]:mb-2 [&_code]:rounded [&_code]:bg-muted [&_code]:px-1.5 [&_code]:py-1 [&_code]:font-code [&_pre]:my-6 [&_pre]:rounded-md [&_pre]:bg-muted [&_pre]:p-4 [&_pre]:overflow-x-auto"
+        className="prose prose-lg mx-auto mt-8 max-w-none dark:prose-invert"
         dangerouslySetInnerHTML={{ __html: post.content }}
       />
     </article>

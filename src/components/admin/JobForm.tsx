@@ -86,7 +86,7 @@ export default function JobForm({ job }: JobFormProps) {
     }
 
     try {
-      let companyLogoUrl = job?.companyLogoUrl ?? "";
+      let companyLogoUrl = data.companyLogoUrl ?? job?.companyLogoUrl ?? "";
 
       if (logoFile) {
         const formData = new FormData();
