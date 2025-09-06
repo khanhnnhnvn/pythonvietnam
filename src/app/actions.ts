@@ -211,18 +211,38 @@ export async function uploadFile(formData: FormData) {
 
 
 // Job Actions
-export async function getJobs(): Promise<Job[]> {
+export async function getJobs(forAdminPage: boolean = false): Promise<Job[]> {
     let connection;
     try {
         connection = await mysql.createConnection(dbConfig);
-        const sql = `
+        
+        let sql = `
             SELECT j.*, COUNT(a.id) as application_count
             FROM jobs j
             LEFT JOIN applications a ON j.id = a.job_id
+        `;
+        const params: (string | number)[] = [];
+
+        // If this is for the admin page, apply permission logic
+        if (forAdminPage) {
+            const user = await getServerSideUser();
+            if (!user) {
+                return []; // Not logged in, can't see any jobs on admin page
+            }
+            const appUser = await getUserById(user.uid);
+            if (appUser?.role !== 'admin') {
+                sql += ' WHERE j.user_id = ?';
+                params.push(user.uid);
+            }
+            // Admins will not have the WHERE clause, getting all jobs
+        }
+
+        sql += `
             GROUP BY j.id
             ORDER BY j.created_at DESC
         `;
-        const [rows] = await connection.execute<mysql.RowDataPacket[]>(sql);
+
+        const [rows] = await connection.execute<mysql.RowDataPacket[]>(sql, params);
         return rows as Job[];
     } catch (error) {
         console.error('Failed to fetch jobs:', error);

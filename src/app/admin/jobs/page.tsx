@@ -24,17 +24,13 @@ interface AdminJobsPageProps {
 }
 
 export default async function AdminJobsPage({ user }: AdminJobsPageProps) {
-  const allJobs = await getJobs();
+  // Pass true to getJobs to enable permission checks on the server
+  const jobsToDisplay = await getJobs(true);
   
-  // The user object is now passed as a prop from the layout
   const appUser = user;
 
-  const jobsToDisplay = appUser?.role === 'admin' 
-    ? allJobs
-    // If not admin, only show jobs created by this user
-    : allJobs.filter(job => job.user_id === appUser?.uid);
-
-  // Helper to determine if the current user can edit/delete/view applicants
+  // The `canManageJob` logic is now implicitly handled on the server,
+  // but we can keep it for enabling/disabling UI elements as a secondary check.
   const canManageJob = (job: Job) => {
     if (!appUser) return false;
     // Admin can manage any job

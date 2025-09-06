@@ -1,3 +1,4 @@
+
 import JobCard from "@/components/jobs/JobCard";
 import JobSearchFilters from "@/components/jobs/JobSearchFilters";
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
@@ -19,7 +20,7 @@ export default async function JobsPage({
 
   const query = searchParams.q as string | undefined;
   const location = searchParams.location as string | undefined;
-  const category = searchParams.category as Job["category"] | undefined;
+  const category = searchParams.category as string | undefined;
 
   const filteredJobs = allJobs.filter((job) => {
     const queryMatch =
@@ -28,7 +29,7 @@ export default async function JobsPage({
       job.company.toLowerCase().includes(query.toLowerCase());
     const locationMatch =
       !location || job.location.toLowerCase().includes(location.toLowerCase());
-    const categoryMatch = !category || job.category === category;
+    const categoryMatch = !category || job.category.toLowerCase().includes(category.toLowerCase());
 
     return queryMatch && locationMatch && categoryMatch;
   });
