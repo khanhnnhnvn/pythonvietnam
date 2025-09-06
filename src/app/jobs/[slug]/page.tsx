@@ -8,7 +8,8 @@ import { Button } from "@/components/ui/button";
 
 export async function generateStaticParams() {
   const jobs = await getJobs();
-  return jobs.map((job) => ({
+  // Ensure that every job has a slug. If not, filter it out.
+  return jobs.filter(job => job.slug).map((job) => ({
     slug: job.slug,
   }));
 }
@@ -78,3 +79,4 @@ export default async function JobDetailPage({ params }: { params: { slug: string
         </div>
     )
 }
+
