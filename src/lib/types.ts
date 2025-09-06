@@ -56,3 +56,14 @@ export const jobFormSchema = z.object({
 });
 
 export type JobFormData = z.infer<typeof jobFormSchema>;
+
+
+export const applicationFormSchema = z.object({
+  jobId: z.number(),
+  name: z.string().min(2, { message: "Họ và tên là bắt buộc." }),
+  email: z.string().email({ message: "Email không hợp lệ." }),
+  phone: z.string().optional(),
+  cvUrl: z.string().min(1, { message: "Vui lòng tải lên CV của bạn." }),
+});
+
+export type ApplicationFormData = z.infer<typeof applicationFormSchema>;

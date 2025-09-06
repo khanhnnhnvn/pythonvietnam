@@ -1,6 +1,6 @@
 'use server';
 
-import type { BlogPost, Job, PostFormData, JobFormData } from '@/lib/types';
+import type { BlogPost, Job, PostFormData, JobFormData, ApplicationFormData } from '@/lib/types';
 import mysql from 'mysql2/promise';
 import fs from 'node:fs/promises';
 import path from 'node:path';
@@ -314,4 +314,23 @@ export async function deleteJob(id: number) {
     }
 }
 
-    
+// Application Actions
+export async function createApplication(data: ApplicationFormData) {
+    let connection;
+    try {
+        connection = await mysql.createConnection(dbConfig);
+        const sql = `
+            INSERT INTO applications (job_id, name, email, phone, cv_url)
+            VALUES (?, ?, ?, ?, ?);
+        `;
+        await connection.execute(sql, [data.jobId, data.name, data.email, data.phone, data.cvUrl]);
+        return { success: true };
+    } catch (error: any) {
+        console.error('Failed to create application:', error);
+        return { success: false, error: `Database Error: ${error.message}` };
+    } finally {
+        if (connection) {
+            await connection.end();
+        }
+    }
+}

@@ -4,13 +4,18 @@ import Image from "next/image";
 import { Badge } from "@/components/ui/badge";
 import { Briefcase, MapPin } from "lucide-react";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
-import { Button } from "@/components/ui/button";
+import ApplicationDialog from "@/components/jobs/ApplicationDialog";
 
 export async function generateStaticParams() {
     const jobs = await getJobs();
-    return jobs.map((job) => ({
-      slug: job.slug,
-    }));
+    if (!jobs || jobs.length === 0) {
+        return [];
+    }
+    return jobs
+        .filter(job => job.slug) 
+        .map((job) => ({
+            slug: job.slug,
+        }));
 }
 
 export async function generateMetadata({ params }: { params: { slug: string } }) {
@@ -63,7 +68,7 @@ export default async function JobDetailPage({ params }: { params: { slug: string
                         </div>
                     </div>
                     <div className="w-full shrink-0 md:w-auto">
-                        <Button className="w-full bg-accent text-accent-foreground hover:bg-accent/90 md:w-auto">Ứng tuyển</Button>
+                        <ApplicationDialog job={job} />
                     </div>
                 </CardHeader>
                 <CardContent>
