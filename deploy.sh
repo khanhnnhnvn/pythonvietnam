@@ -1,3 +1,4 @@
+
 #!/bin/bash
 
 # Script tự động triển khai ứng dụng Next.js với PM2 trên Ubuntu 24.04
@@ -27,7 +28,8 @@ then
 fi
 
 # 2. Kiểm tra PM2
-if ! npm list -g | grep -q pm2; then
+if ! command -v pm2 &> /dev/null
+then
     echo "PM2 chưa được cài đặt. Đang tiến hành cài đặt PM2 trên toàn cục..."
     npm install -g pm2
 fi

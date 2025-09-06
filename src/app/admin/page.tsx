@@ -23,7 +23,7 @@ export default async function AdminDashboardPage() {
   return (
     <div>
        <div className="mb-6">
-        <h1 className="text-2xl font-bold">Bảng điều khiển</h1>
+        <h1 className="text-2xl font-bold">Dashboard</h1>
         <p className="text-muted-foreground">Tổng quan về trang web của bạn.</p>
       </div>
       <div className="grid gap-4 md:grid-cols-2 md:gap-8 lg:grid-cols-2">
@@ -65,5 +65,4 @@ export default async function AdminDashboardPage() {
     </div>
   );
 }
-
     

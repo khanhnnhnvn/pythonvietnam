@@ -3,7 +3,7 @@
 
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import { Code2, BookOpen, Briefcase, Menu, ShieldCheck } from "lucide-react";
+import { Code2, BookOpen, Briefcase, Menu, ShieldCheck, LayoutDashboard } from "lucide-react";
 import { useState, useEffect } from "react";
 import { onAuthStateChanged } from "firebase/auth";
 import { auth } from "@/lib/firebase";
@@ -64,6 +64,8 @@ export default function Header() {
     );
   }
 
+  const showDashboardLink = currentUser?.role === 'admin' || currentUser?.role === 'employer';
+
   return (
     <header className="sticky top-0 z-50 w-full border-b bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60">
       <div className="container flex h-14 items-center">
@@ -79,7 +81,7 @@ export default function Header() {
           {navLinks.map((link) => (
             <NavLink key={link.href} {...link} />
           ))}
-           {currentUser?.role === 'admin' && (
+           {showDashboardLink && (
              <Link
                 href="/admin"
                 className={cn(
@@ -89,8 +91,8 @@ export default function Header() {
                         : "text-foreground/70 hover:bg-foreground/5 hover:text-foreground"
                 )}
                 >
-                <ShieldCheck className="h-4 w-4" />
-                Quản trị
+                <LayoutDashboard className="h-4 w-4" />
+                Dashboard
             </Link>
           )}
         </nav>
@@ -120,7 +122,7 @@ export default function Header() {
                   {navLinks.map((link) => (
                     <NavLink key={link.href} {...link} />
                   ))}
-                   {currentUser?.role === 'admin' && (
+                   {showDashboardLink && (
                     <Link
                         href="/admin"
                         className={cn(
@@ -131,8 +133,8 @@ export default function Header() {
                         )}
                         onClick={() => setIsMobileMenuOpen(false)}
                         >
-                        <ShieldCheck className="h-4 w-4" />
-                        Quản trị
+                        <LayoutDashboard className="h-4 w-4" />
+                        Dashboard
                     </Link>
                   )}
                 </nav>
@@ -144,5 +146,3 @@ export default function Header() {
     </header>
   );
 }
-
-    
