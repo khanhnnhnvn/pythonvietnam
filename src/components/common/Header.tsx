@@ -3,9 +3,9 @@
 
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import { Code2, BookOpen, Briefcase, Menu, UserCog } from "lucide-react";
+import { Code2, BookOpen, Briefcase, Menu } from "lucide-react";
 import { useState, useEffect } from "react";
-import { onAuthStateChanged, User } from "firebase/auth";
+import { onAuthStateChanged } from "firebase/auth";
 import { auth } from "@/lib/firebase";
 import { getUserById } from "@/app/actions";
 
