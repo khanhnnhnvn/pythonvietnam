@@ -1,3 +1,4 @@
+
 import Image from "next/image";
 import Link from "next/link";
 import type { Job } from "@/lib/types";
@@ -21,7 +22,7 @@ export default function JobCard({ job }: JobCardProps) {
       <Card className="flex h-full flex-col items-start gap-4 p-4 transition-all hover:shadow-md group-hover:border-primary/50 md:flex-row md:items-center md:p-6">
         <div className="relative h-16 w-16 flex-shrink-0">
           <Image
-            src={job.companyLogoUrl}
+            src={job.companyLogoUrl || '/placeholder.svg'}
             alt={`Logo của ${job.company}`}
             data-ai-hint={job.companyLogoHint}
             fill

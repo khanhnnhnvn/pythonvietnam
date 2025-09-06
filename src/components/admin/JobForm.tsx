@@ -239,7 +239,7 @@ export default function JobForm({ job }: JobFormProps) {
           name="companyLogoUrl"
           render={({ field }) => (
             <FormItem>
-              <FormLabel>Logo công ty</FormLabel>
+              <FormLabel>Logo công ty (Tùy chọn)</FormLabel>
               <FormControl>
                 <Input type="file" accept="image/*" onChange={handleLogoChange} />
               </FormControl>

@@ -65,7 +65,7 @@ export const jobFormSchema = z.object({
   type: z.enum(['Toàn thời gian', 'Bán thời gian', 'Hợp đồng']),
   category: z.string().min(2, { message: "Lĩnh vực là bắt buộc." }),
   description: z.string().min(10, { message: "Mô tả phải có ít nhất 10 ký tự." }),
-  companyLogoUrl: z.string().min(1, "Vui lòng tải lên logo."),
+  companyLogoUrl: z.string().optional(),
   companyLogoHint: z.string().max(40, { message: "Gợi ý ảnh không được quá 40 ký tự."}).optional(),
 });
 

@@ -46,7 +46,7 @@ export default async function JobDetailPage({ params }: { params: { slug: string
                 <CardHeader className="flex flex-col items-start gap-4 md:flex-row">
                     <div className="relative h-24 w-24 flex-shrink-0">
                         <Image
-                        src={job.companyLogoUrl}
+                        src={job.companyLogoUrl || '/placeholder.svg'}
                         alt={`Logo của ${job.company}`}
                         data-ai-hint={job.companyLogoHint}
                         fill
