@@ -12,7 +12,7 @@ export default async function Home() {
   const allPosts = await getPosts();
   const allJobs = await getJobs();
   const latestPosts = allPosts.slice(0, 3);
-  const featuredJobs = allJobs.slice(0, 2);
+  const featuredJobs = allJobs.slice(0, 4);
 
   return (
     <div className="flex flex-col">
