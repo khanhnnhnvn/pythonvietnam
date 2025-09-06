@@ -1,7 +1,7 @@
 "use client";
 
 import { useState, useEffect } from "react";
-import { GoogleAuthProvider, signInWithPopup, onAuthStateChanged, User } from "firebase/auth";
+import { GoogleAuthProvider, signInWithPopup, onAuthStateChanged, User, signOut } from "firebase/auth";
 import { auth } from "@/lib/firebase";
 import { saveUser } from "@/app/actions";
 import { Button } from "@/components/ui/button";
@@ -24,9 +24,8 @@ export default function AuthButton() {
 
   useEffect(() => {
     const unsubscribe = onAuthStateChanged(auth, async (user) => {
+      setIsLoading(true);
       if (user) {
-        // Lưu người dùng vào DB mỗi khi trạng thái thay đổi (ví dụ: tải lại trang)
-        // để cập nhật last_login_at
         const result = await saveUser({
             uid: user.uid,
             email: user.email ?? undefined,
@@ -52,7 +51,7 @@ export default function AuthButton() {
     setIsLoading(true);
     const provider = new GoogleAuthProvider();
     try {
-      const result = await signInWithPopup(auth, provider);
+      await signInWithPopup(auth, provider);
       // onAuthStateChanged sẽ tự động xử lý việc cập nhật state và lưu user
     } catch(error) {
         console.error("Authentication error:", error);
@@ -68,7 +67,7 @@ export default function AuthButton() {
   const handleSignOut = async () => {
     setIsLoading(true);
     try {
-        await auth.signOut();
+        await signOut(auth);
         // onAuthStateChanged sẽ xử lý việc cập nhật user state thành null
     } catch (e) {
         toast({
@@ -77,22 +76,22 @@ export default function AuthButton() {
             description: "Đã có lỗi xảy ra trong quá trình đăng xuất.",
         });
     } finally {
-        // setIsLoading sẽ được set thành false trong onAuthStateChanged
+      // setIsLoading sẽ được set thành false trong onAuthStateChanged
     }
   }
 
   if (isLoading) {
     return (
-      <div className="flex h-10 w-10 items-center justify-center">
+      <Button variant="ghost" size="icon" disabled>
         <LoaderCircle className="animate-spin" />
-      </div>
+      </Button>
     );
   }
 
   if (!user) {
     return (
-      <Button onClick={handleSignIn}>
-        <LogIn className="mr-2" />
+      <Button onClick={handleSignIn} size="sm">
+        <LogIn className="mr-2 h-4 w-4" />
         Đăng nhập
       </Button>
     );
@@ -102,7 +101,7 @@ export default function AuthButton() {
     <DropdownMenu>
       <DropdownMenuTrigger asChild>
         <Button variant="ghost" className="relative h-10 w-10 rounded-full">
-            <Avatar>
+            <Avatar className="h-9 w-9">
                 <AvatarImage src={user.photoURL ?? undefined} alt={user.displayName ?? "User"} />
                 <AvatarFallback>{user.displayName?.charAt(0).toUpperCase()}</AvatarFallback>
             </Avatar>
@@ -116,6 +115,9 @@ export default function AuthButton() {
           </div>
         </DropdownMenuLabel>
         <DropdownMenuSeparator />
+        <DropdownMenuItem onClick={() => window.location.reload()} className="cursor-pointer">
+          <span>Tải lại trang</span>
+        </DropdownMenuItem>
         <DropdownMenuItem onClick={handleSignOut} className="cursor-pointer">
           <LogOut className="mr-2" />
           <span>Đăng xuất</span>

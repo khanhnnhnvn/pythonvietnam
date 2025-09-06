@@ -7,6 +7,7 @@ type UserData = {
   email?: string;
   name?: string | null;
   avatar?: string;
+  role?: string;
 };
 
 const dbConfig = {
@@ -36,6 +37,32 @@ export async function saveUser(user: UserData) {
     return { success: false, error: `Lỗi CSDL: ${error.message}` };
   }
   finally {
+    if (connection) {
+      await connection.end();
+    }
+  }
+}
+
+export async function getUserById(userId: string): Promise<UserData | null> {
+  let connection;
+  try {
+    connection = await mysql.createConnection(dbConfig);
+    const [rows]: any[] = await connection.execute('SELECT id, email, name, photo_url, role FROM users WHERE id = ?', [userId]);
+    if (rows.length > 0) {
+      const user = rows[0];
+      return {
+        uid: user.id,
+        email: user.email,
+        name: user.name,
+        avatar: user.photo_url,
+        role: user.role
+      };
+    }
+    return null;
+  } catch (error) {
+    console.error('Lỗi lấy thông tin người dùng:', error);
+    return null;
+  } finally {
     if (connection) {
       await connection.end();
     }
