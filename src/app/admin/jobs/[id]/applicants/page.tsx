@@ -16,7 +16,8 @@ import { Download } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
 
 export default async function JobApplicantsPage({ params }: { params: { id: string } }) {
-  const jobId = parseInt(params.id, 10);
+  const awaitedParams = await params;
+  const jobId = parseInt(awaitedParams.id, 10);
   if (isNaN(jobId)) {
     notFound();
   }

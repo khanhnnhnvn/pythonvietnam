@@ -5,7 +5,8 @@ import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/com
 import { getJobById } from "@/app/actions";
 
 export default async function EditJobPage({ params }: { params: { id: string } }) {
-    const id = parseInt(params.id, 10);
+    const awaitedParams = await params;
+    const id = parseInt(awaitedParams.id, 10);
     if (isNaN(id)) {
         notFound();
     }
