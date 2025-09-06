@@ -1,20 +1,27 @@
 import mysql from 'mysql2/promise';
+import type { Connection } from 'mysql2/promise';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { AlertCircle, CheckCircle } from 'lucide-react';
 
 async function testDbConnection() {
+  let connection: Connection | undefined;
   try {
-    const connection = await mysql.createConnection({
+    connection = await mysql.createConnection({
       host: process.env.DB_HOST,
       user: process.env.DB_USER,
       password: process.env.DB_PASSWORD,
       database: process.env.DB_DATABASE,
     });
-    await connection.end();
+    // Nếu kết nối thành công, chúng ta không cần làm gì thêm ở đây.
+    // Kết nối sẽ được đóng trong khối finally.
     return { success: true, message: 'Kết nối cơ sở dữ liệu MySQL thành công!' };
   } catch (error: any) {
     console.error('Lỗi kết nối CSDL:', error);
     return { success: false, message: `Kết nối thất bại: ${error.message}` };
+  } finally {
+    if (connection) {
+      await connection.end();
+    }
   }
 }
 
