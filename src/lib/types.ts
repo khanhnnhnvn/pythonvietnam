@@ -45,7 +45,7 @@ export type PostFormData = z.infer<typeof postFormSchema>;
 
 export const jobFormSchema = z.object({
   title: z.string().min(5, { message: "Chức danh phải có ít nhất 5 ký tự." }),
-  slug: z.string().min(5, { message: "Slug phải có ít nhất 5 ký tự." }).regex(/^[a-z0-9-]+$/, { message: "Slug chỉ được chứa chữ thường, số và dấu gạch ngang." }),
+  slug: z.string().min(1, { message: "Slug không được để trống." }),
   company: z.string().min(2, { message: "Tên công ty là bắt buộc." }),
   location: z.string().min(2, { message: "Địa điểm là bắt buộc." }),
   type: z.enum(['Toàn thời gian', 'Bán thời gian', 'Hợp đồng']),
