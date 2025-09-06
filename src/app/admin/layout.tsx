@@ -1,27 +1,57 @@
+'use client';
+
 import * as React from "react";
-import { redirect } from 'next/navigation';
-import { getServerSideUser } from "@/lib/firebase-admin"; 
+import { useRouter } from 'next/navigation';
+import { onAuthStateChanged } from "firebase/auth";
+import { auth } from "@/lib/firebase";
 import { getUserById } from "@/app/actions";
-import { SidebarProvider, Sidebar, SidebarTrigger, SidebarContent, SidebarMenu, SidebarMenuItem, SidebarMenuButton, SidebarHeader, SidebarInset } from "@/components/ui/sidebar";
-import { BookText, Briefcase, LayoutDashboard } from "lucide-react";
+import { SidebarProvider, Sidebar, SidebarTrigger, SidebarContent, SidebarMenu, SidebarMenuItem, SidebarMenuButton, SidebarHeader } from "@/components/ui/sidebar";
+import { BookText, Briefcase, LayoutDashboard, LoaderCircle } from "lucide-react";
 import Link from "next/link";
 import AdminHeader from "@/components/admin/AdminHeader";
+import type { User } from "firebase/auth";
 
-export default async function AdminLayout({
+type AppUser = {
+  uid: string;
+  email?: string;
+  name?: string | null;
+  avatar?: string;
+  role?: string;
+};
+
+export default function AdminLayout({
   children,
 }: {
   children: React.ReactNode;
 }) {
-  const user = await getServerSideUser();
-  
-  if (!user) {
-    return redirect('/');
-  }
+  const [user, setUser] = React.useState<AppUser | null>(null);
+  const [loading, setLoading] = React.useState(true);
+  const router = useRouter();
 
-  const appUser = await getUserById(user.uid);
+  React.useEffect(() => {
+    const unsubscribe = onAuthStateChanged(auth, async (firebaseUser: User | null) => {
+      if (firebaseUser) {
+        const appUser = await getUserById(firebaseUser.uid);
+        if (appUser?.role !== 'admin') {
+          router.push('/');
+        } else {
+          setUser(appUser);
+          setLoading(false);
+        }
+      } else {
+        router.push('/');
+      }
+    });
 
-  if (appUser?.role !== 'admin') {
-    return redirect('/');
+    return () => unsubscribe();
+  }, [router]);
+
+  if (loading || !user) {
+    return (
+      <div className="flex h-screen w-full items-center justify-center">
+        <LoaderCircle className="h-8 w-8 animate-spin" />
+      </div>
+    );
   }
 
   return (
@@ -64,7 +94,7 @@ export default async function AdminLayout({
           </SidebarContent>
         </Sidebar>
         <div className="flex-1">
-          <AdminHeader user={appUser} />
+          <AdminHeader user={user} />
           <main className="p-4 sm:p-6 lg:p-8">
             {children}
           </main>
