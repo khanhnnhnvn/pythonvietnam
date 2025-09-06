@@ -9,13 +9,18 @@ import { postFormSchema, type PostFormData, type BlogPost } from "@/lib/types";
 import { useToast } from "@/hooks/use-toast";
 import { createPost, updatePost, uploadFile } from "@/app/actions";
 import { generateSlug } from "@/lib/utils";
+import { generateBlogPost } from "@/ai/flows/generate-blog-post-flow";
+import { fileTypeFromBuffer } from 'file-type';
+
 
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage, FormDescription } from "@/components/ui/form";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
-import { LoaderCircle, Upload } from "lucide-react";
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription, DialogFooter, DialogTrigger, DialogClose } from "@/components/ui/dialog";
+import { LoaderCircle, Upload, Sparkles } from "lucide-react";
+
 
 interface PostFormProps {
   post?: BlogPost | null;
@@ -27,6 +32,8 @@ export default function PostForm({ post, authorName }: PostFormProps) {
   const { toast } = useToast();
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [isUploading, setIsUploading] = useState(false);
+  const [isGenerating, setIsGenerating] = useState(false);
+  const [aiKeywords, setAiKeywords] = useState("");
   const fileInputRef = useRef<HTMLInputElement>(null);
   const isEditMode = !!post;
 
@@ -59,6 +66,68 @@ export default function PostForm({ post, authorName }: PostFormProps) {
       form.setValue("author", authorName);
     }
   }, [authorName, form]);
+
+  const handleGenerateWithAI = async () => {
+    if (!aiKeywords) {
+        toast({
+            variant: "destructive",
+            title: "Thiếu từ khóa",
+            description: "Vui lòng nhập từ khóa để AI có thể sáng tạo.",
+        });
+        return;
+    }
+
+    setIsGenerating(true);
+    try {
+        const result = await generateBlogPost({ keywords: aiKeywords });
+
+        const { blogPost, imageDataUri } = result;
+
+        // Populate text fields
+        form.setValue("title", blogPost.title, { shouldValidate: true });
+        form.setValue("description", blogPost.description, { shouldValidate: true });
+        form.setValue("category", blogPost.category, { shouldValidate: true });
+        form.setValue("content", blogPost.content, { shouldValidate: true });
+        form.setValue("imageHint", aiKeywords.split(' ').slice(0, 2).join(' '), { shouldValidate: true });
+
+        // Handle image upload
+        const imageBuffer = Buffer.from(imageDataUri.split(',')[1], 'base64');
+        const type = await fileTypeFromBuffer(imageBuffer);
+        if (!type) {
+            throw new Error('Không thể xác định loại tệp ảnh.');
+        }
+        const blob = new Blob([imageBuffer], { type: type.mime });
+        const imageFile = new File([blob], `ai-generated-${Date.now()}.${type.ext}`, { type: type.mime });
+
+        const formData = new FormData();
+        formData.append('file', imageFile);
+
+        const uploadResult = await uploadFile(formData);
+        if (uploadResult.success && uploadResult.url) {
+            form.setValue('imageUrl', uploadResult.url, { shouldValidate: true });
+        } else {
+            throw new Error(uploadResult.error || 'Lỗi không xác định khi tải ảnh AI lên.');
+        }
+
+        toast({
+            title: "Hoàn tất!",
+            description: "AI đã tạo xong bài viết và hình ảnh cho bạn.",
+        });
+
+    } catch (error: any) {
+        console.error("AI Generation Error:", error);
+        toast({
+            variant: "destructive",
+            title: "Lỗi tạo bài viết bằng AI",
+            description: error.message,
+        });
+    } finally {
+        setIsGenerating(false);
+        // Close the dialog by finding its close button
+        document.getElementById('ai-dialog-close')?.click();
+    }
+  };
+
 
   const handleFileChange = async (event: React.ChangeEvent<HTMLInputElement>) => {
     const file = event.target.files?.[0];
@@ -121,8 +190,49 @@ export default function PostForm({ post, authorName }: PostFormProps) {
   return (
     <Card>
       <CardHeader>
-        <CardTitle>{isEditMode ? "Sửa bài viết" : "Tạo bài viết mới"}</CardTitle>
-        <CardDescription>Điền thông tin chi tiết cho bài viết của bạn.</CardDescription>
+        <div className="flex items-center justify-between">
+            <div>
+                <CardTitle>{isEditMode ? "Sửa bài viết" : "Tạo bài viết mới"}</CardTitle>
+                <CardDescription>Điền thông tin chi tiết cho bài viết của bạn.</CardDescription>
+            </div>
+            {!isEditMode && (
+                 <Dialog>
+                    <DialogTrigger asChild>
+                        <Button variant="outline">
+                            <Sparkles className="mr-2 h-4 w-4" />
+                            Viết bài bằng AI
+                        </Button>
+                    </DialogTrigger>
+                    <DialogContent>
+                        <DialogHeader>
+                            <DialogTitle>Tạo bài viết với AI</DialogTitle>
+                            <DialogDescription>
+                                Nhập một vài từ khóa về chủ đề bạn muốn viết. AI sẽ tự động tạo tiêu đề, nội dung và cả hình ảnh đại diện cho bạn.
+                            </DialogDescription>
+                        </DialogHeader>
+                        <div className="space-y-4 py-4">
+                            <Label htmlFor="ai-keywords">Từ khóa</Label>
+                            <Input 
+                                id="ai-keywords" 
+                                placeholder="Ví dụ: python data science, fastAPI tutorial..." 
+                                value={aiKeywords}
+                                onChange={(e) => setAiKeywords(e.target.value)}
+                                disabled={isGenerating}
+                            />
+                        </div>
+                        <DialogFooter>
+                             <DialogClose asChild>
+                                <Button type="button" variant="secondary" id="ai-dialog-close">Hủy</Button>
+                             </DialogClose>
+                            <Button onClick={handleGenerateWithAI} disabled={isGenerating}>
+                                {isGenerating && <LoaderCircle className="mr-2 h-4 w-4 animate-spin" />}
+                                {isGenerating ? "Đang tạo..." : "Tạo bài viết"}
+                            </Button>
+                        </DialogFooter>
+                    </DialogContent>
+                </Dialog>
+            )}
+        </div>
       </CardHeader>
       <CardContent>
         <Form {...form}>

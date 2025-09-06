@@ -1,0 +1,65 @@
+'use server';
+
+/**
+ * @fileOverview Generates a blog post with an image from keywords.
+ *
+ * - generateBlogPost - Generates a blog post including title, content, and an image.
+ * - GenerateBlogPostInput - Input schema for the generation.
+ * - GenerateBlogPostOutput - Output schema for the generation.
+ */
+
+import { ai } from '@/ai/genkit';
+import { z } from 'genkit';
+
+const GenerateBlogPostInputSchema = z.object({
+  keywords: z.string().describe('Keywords to base the blog post on.'),
+});
+export type GenerateBlogPostInput = z.infer<typeof GenerateBlogPostInputSchema>;
+
+const BlogPostSchema = z.object({
+  title: z.string().describe('The catchy and SEO-friendly title of the blog post.'),
+  description: z.string().describe('A short, compelling meta description for the blog post.'),
+  category: z.string().describe('A relevant category for the blog post (e.g., "Web Development", "Data Science").'),
+  content: z.string().describe('The full content of the blog post, formatted in HTML. Include headings (h2, h3), paragraphs (p), lists (ul, ol, li), and code blocks (pre, code).'),
+});
+
+const GenerateBlogPostOutputSchema = z.object({
+  blogPost: BlogPostSchema,
+  imageDataUri: z.string().describe("A data URI of the generated image. Expected format: 'data:<mimetype>;base64,<encoded_data>'."),
+});
+export type GenerateBlogPostOutput = z.infer<typeof GenerateBlogPostOutputSchema>;
+
+
+const blogPostPrompt = ai.definePrompt({
+  name: 'blogPostPrompt',
+  input: { schema: GenerateBlogPostInputSchema },
+  output: { schema: BlogPostSchema },
+  prompt: `You are an expert content creator for a Vietnamese Python community blog.
+  Generate a high-quality blog post in Vietnamese based on the following keywords: {{{keywords}}}.
+  The post should be informative, engaging, and well-structured.
+  The content should be in HTML format.
+  The category should be one of the following: Hướng dẫn, Web Development, Data Science, Machine Learning, Tin tức.
+  `,
+});
+
+export async function generateBlogPost(input: GenerateBlogPostInput): Promise<GenerateBlogPostOutput> {
+  const [postResponse, imageResponse] = await Promise.all([
+    blogPostPrompt(input),
+    ai.generate({
+      model: 'googleai/imagen-4.0-fast-generate-001',
+      prompt: `A high-quality, relevant image for a blog post about: ${input.keywords}`,
+    }),
+  ]);
+
+  const blogPost = postResponse.output;
+  if (!blogPost) {
+    throw new Error('Failed to generate blog post content.');
+  }
+
+  const imageDataUri = imageResponse.media?.url;
+  if (!imageDataUri) {
+    throw new Error('Failed to generate blog post image.');
+  }
+
+  return { blogPost, imageDataUri };
+}
