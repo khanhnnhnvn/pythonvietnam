@@ -8,6 +8,7 @@ import { useState } from "react";
 import { Button } from "@/components/ui/button";
 import { Sheet, SheetContent, SheetTrigger } from "@/components/ui/sheet";
 import { cn } from "@/lib/utils";
+import AuthButton from "../auth/AuthButton";
 
 const navLinks = [
   { href: "/blog", label: "Bài viết", icon: BookOpen },
@@ -50,6 +51,9 @@ export default function Header() {
             <NavLink key={link.href} {...link} />
           ))}
         </nav>
+        <div className="ml-auto hidden items-center gap-2 md:flex">
+          <AuthButton />
+        </div>
         <div className="flex flex-1 items-center justify-end md:hidden">
           <Sheet open={isMobileMenuOpen} onOpenChange={setIsMobileMenuOpen}>
             <SheetTrigger asChild>
@@ -73,6 +77,9 @@ export default function Header() {
                     <NavLink key={link.href} {...link} />
                   ))}
                 </nav>
+                <div className="mt-auto pt-4">
+                    <AuthButton />
+                </div>
               </div>
             </SheetContent>
           </Sheet>
