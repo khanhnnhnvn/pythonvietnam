@@ -6,30 +6,6 @@ import { Briefcase, MapPin } from "lucide-react";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 
-export async function generateStaticParams() {
-  const jobs = await getJobs();
-  // Ensure that every job has a slug, then map to the correct format
-  return jobs
-    .filter(job => !!job.slug) 
-    .map((job) => ({
-      slug: job.slug,
-    }));
-}
-
-export async function generateMetadata({ params }: { params: { slug: string } }) {
-  const job = await getJobBySlug(params.slug);
-  if (!job) {
-    return {
-      title: "Không tìm thấy việc làm",
-    };
-  }
-  return {
-    title: `${job.title} tại ${job.company} | Python Vietnam`,
-    description: job.description.substring(0, 160),
-  };
-}
-
-
 export default async function JobDetailPage({ params }: { params: { slug: string }}) {
     const job = await getJobBySlug(params.slug);
 
