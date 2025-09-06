@@ -1,15 +1,29 @@
 import Link from "next/link";
-import { getJobs } from "@/app/actions";
+import { getJobs, getUserById } from "@/app/actions";
 import { Button } from "@/components/ui/button";
 import { Card, CardHeader, CardTitle, CardDescription, CardContent } from "@/components/ui/card";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Badge } from "@/components/ui/badge";
-import { PlusCircle, MoreHorizontal, Users } from "lucide-react";
+import { PlusCircle, MoreHorizontal, Users, Shield, Lock } from "lucide-react";
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuLabel, DropdownMenuTrigger, DropdownMenuSeparator } from "@/components/ui/dropdown-menu";
 import DeleteJobDialog from "./_components/DeleteJobDialog";
+import { getServerSideUser } from "@/lib/firebase-admin";
+import type { Job } from "@/lib/types";
 
 export default async function AdminJobsPage() {
-  const jobs = await getJobs();
+  const allJobs = await getJobs();
+  const user = await getServerSideUser();
+  const appUser = user ? await getUserById(user.uid) : null;
+  
+  const jobsToDisplay = appUser?.role === 'admin' 
+    ? allJobs
+    : allJobs.filter(job => job.user_id === user?.uid);
+
+  const canEditOrDelete = (job: Job) => {
+    if (!appUser) return false;
+    if (appUser.role === 'admin') return true;
+    return job.user_id === appUser.uid;
+  }
 
   return (
     <Card>
@@ -17,7 +31,12 @@ export default async function AdminJobsPage() {
         <div className="flex items-center justify-between">
           <div>
             <CardTitle>Quản lý Việc làm</CardTitle>
-            <CardDescription>Thêm, sửa, hoặc xóa tin tuyển dụng trên trang của bạn.</CardDescription>
+            <CardDescription>
+              {appUser?.role === 'admin'
+                ? 'Thêm, sửa, hoặc xóa tất cả tin tuyển dụng.'
+                : 'Quản lý các tin tuyển dụng bạn đã đăng.'
+              }
+            </CardDescription>
           </div>
           <Button asChild>
             <Link href="/admin/jobs/new">
@@ -40,8 +59,8 @@ export default async function AdminJobsPage() {
             </TableRow>
           </TableHeader>
           <TableBody>
-            {jobs.length > 0 ? (
-              jobs.map((job) => (
+            {jobsToDisplay.length > 0 ? (
+              jobsToDisplay.map((job) => (
                 <TableRow key={job.id}>
                   <TableCell className="font-medium">{job.title}</TableCell>
                   <TableCell className="hidden md:table-cell">
@@ -49,16 +68,22 @@ export default async function AdminJobsPage() {
                   </TableCell>
                   <TableCell className="hidden sm:table-cell">{job.location}</TableCell>
                    <TableCell className="text-center">
-                     <Link href={`/admin/jobs/${job.id}/applicants`}>
-                        <Badge variant="secondary" className="cursor-pointer hover:bg-primary/20">
-                            {job.application_count ?? 0}
+                    {canEditOrDelete(job) ? (
+                        <Link href={`/admin/jobs/${job.id}/applicants`}>
+                            <Badge variant="secondary" className="cursor-pointer hover:bg-primary/20">
+                                {job.application_count ?? 0}
+                            </Badge>
+                        </Link>
+                    ) : (
+                        <Badge variant="outline" className="cursor-not-allowed">
+                            <Lock className="h-3 w-3"/>
                         </Badge>
-                     </Link>
+                    )}
                   </TableCell>
                   <TableCell>
                     <DropdownMenu>
                       <DropdownMenuTrigger asChild>
-                        <Button aria-haspopup="true" size="icon" variant="ghost">
+                        <Button aria-haspopup="true" size="icon" variant="ghost" disabled={!canEditOrDelete(job)}>
                           <MoreHorizontal className="h-4 w-4" />
                           <span className="sr-only">Toggle menu</span>
                         </Button>
@@ -93,3 +118,5 @@ export default async function AdminJobsPage() {
     </Card>
   );
 }
+
+    

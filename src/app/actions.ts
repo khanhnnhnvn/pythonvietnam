@@ -212,40 +212,17 @@ export async function uploadFile(formData: FormData) {
 
 // Job Actions
 export async function getJobs(): Promise<Job[]> {
-    const user = await getServerSideUser();
-    if (!user) {
-        // Return public jobs if not logged in
-        return [];
-    }
-
-    const appUser = await getUserById(user.uid);
     let connection;
     try {
         connection = await mysql.createConnection(dbConfig);
-        let sql: string;
-        let params: (string | number)[] = [];
-
-        if (appUser?.role === 'admin') {
-            sql = `
-                SELECT j.*, COUNT(a.id) as application_count
-                FROM jobs j
-                LEFT JOIN applications a ON j.id = a.job_id
-                GROUP BY j.id
-                ORDER BY j.created_at DESC
-            `;
-        } else {
-             sql = `
-                SELECT j.*, COUNT(a.id) as application_count
-                FROM jobs j
-                LEFT JOIN applications a ON j.id = a.job_id
-                WHERE j.user_id = ?
-                GROUP BY j.id
-                ORDER BY j.created_at DESC
-            `;
-            params.push(user.uid);
-        }
-        
-        const [rows] = await connection.execute<mysql.RowDataPacket[]>(sql, params);
+        const sql = `
+            SELECT j.*, COUNT(a.id) as application_count
+            FROM jobs j
+            LEFT JOIN applications a ON j.id = a.job_id
+            GROUP BY j.id
+            ORDER BY j.created_at DESC
+        `;
+        const [rows] = await connection.execute<mysql.RowDataPacket[]>(sql);
         return rows as Job[];
     } catch (error) {
         console.error('Failed to fetch jobs:', error);
@@ -436,3 +413,6 @@ export async function createApplication(data: ApplicationFormData) {
     }
 }
 
+
+
+    
