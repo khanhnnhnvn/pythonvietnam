@@ -246,9 +246,10 @@ export async function getJobs(params: { forAdminPage?: boolean, userId?: string 
         connection = await mysql.createConnection(dbConfig);
         
         let sql = `
-            SELECT j.*, COUNT(a.id) as application_count
+            SELECT 
+                j.*, 
+                (SELECT COUNT(*) FROM applications WHERE job_id = j.id) as application_count
             FROM jobs j
-            LEFT JOIN applications a ON j.id = a.job_id
         `;
         const queryParams: (string | number)[] = [];
 
@@ -257,10 +258,7 @@ export async function getJobs(params: { forAdminPage?: boolean, userId?: string 
             queryParams.push(userId);
         }
 
-        sql += `
-            GROUP BY j.id
-            ORDER BY j.created_at DESC
-        `;
+        sql += ` ORDER BY j.created_at DESC`;
 
         const [rows] = await connection.execute<mysql.RowDataPacket[]>(sql, queryParams);
         return rows as Job[];
@@ -417,5 +415,3 @@ export async function createApplication(data: ApplicationFormData) {
         }
     }
 }
-
-    
