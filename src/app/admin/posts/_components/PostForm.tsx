@@ -82,7 +82,7 @@ export default function PostForm({ post, authorName }: PostFormProps) {
     try {
         const result = await generateBlogPost({ keywords: aiKeywords });
 
-        const { blogPost, imageDataUri } = result;
+        const { blogPost, imageDataUri, imageGenerated } = result;
 
         // Populate text fields
         form.setValue("title", blogPost.title, { shouldValidate: true });
@@ -91,29 +91,41 @@ export default function PostForm({ post, authorName }: PostFormProps) {
         form.setValue("content", blogPost.content, { shouldValidate: true });
         form.setValue("imageHint", aiKeywords.split(' ').slice(0, 2).join(' '), { shouldValidate: true });
 
-        // Handle image upload
-        const imageBuffer = Buffer.from(imageDataUri.split(',')[1], 'base64');
-        const type = await fileTypeFromBuffer(imageBuffer);
-        if (!type) {
-            throw new Error('Không thể xác định loại tệp ảnh.');
-        }
-        const blob = new Blob([imageBuffer], { type: type.mime });
-        const imageFile = new File([blob], `ai-generated-${Date.now()}.${type.ext}`, { type: type.mime });
+        // Handle image
+        if (imageGenerated) {
+            // Handle image upload from data URI
+            const imageBuffer = Buffer.from(imageDataUri.split(',')[1], 'base64');
+            const type = await fileTypeFromBuffer(imageBuffer);
+            if (!type) {
+                throw new Error('Không thể xác định loại tệp ảnh.');
+            }
+            const blob = new Blob([imageBuffer], { type: type.mime });
+            const imageFile = new File([blob], `ai-generated-${Date.now()}.${type.ext}`, { type: type.mime });
 
-        const formData = new FormData();
-        formData.append('file', imageFile);
+            const formData = new FormData();
+            formData.append('file', imageFile);
 
-        const uploadResult = await uploadFile(formData);
-        if (uploadResult.success && uploadResult.url) {
-            form.setValue('imageUrl', uploadResult.url, { shouldValidate: true });
+            const uploadResult = await uploadFile(formData);
+            if (uploadResult.success && uploadResult.url) {
+                form.setValue('imageUrl', uploadResult.url, { shouldValidate: true });
+            } else {
+                throw new Error(uploadResult.error || 'Lỗi không xác định khi tải ảnh AI lên.');
+            }
+            toast({
+                title: "Hoàn tất!",
+                description: "AI đã tạo xong bài viết và hình ảnh cho bạn.",
+            });
         } else {
-            throw new Error(uploadResult.error || 'Lỗi không xác định khi tải ảnh AI lên.');
+            // Use placeholder URL directly
+            form.setValue('imageUrl', imageDataUri, { shouldValidate: true });
+             toast({
+                title: "Đã tạo nội dung thành công!",
+                description: "Không thể tạo ảnh bằng AI. Đã sử dụng ảnh placeholder.",
+                variant: "default",
+                duration: 5000,
+            });
         }
 
-        toast({
-            title: "Hoàn tất!",
-            description: "AI đã tạo xong bài viết và hình ảnh cho bạn.",
-        });
 
     } catch (error: any) {
         console.error("AI Generation Error:", error);
@@ -163,6 +175,21 @@ export default function PostForm({ post, authorName }: PostFormProps) {
   async function onSubmit(data: PostFormData) {
     setIsSubmitting(true);
     try {
+      // If the image is a placeholder, upload it to our server first
+      if (data.imageUrl.startsWith('https://picsum.photos')) {
+        const response = await fetch(data.imageUrl);
+        const blob = await response.blob();
+        const file = new File([blob], `placeholder-${Date.now()}.jpg`, { type: 'image/jpeg' });
+        const formData = new FormData();
+        formData.append('file', file);
+        const uploadResult = await uploadFile(formData);
+        if (uploadResult.success && uploadResult.url) {
+          data.imageUrl = uploadResult.url;
+        } else {
+          throw new Error('Failed to upload placeholder image to server.');
+        }
+      }
+
       const result = isEditMode
         ? await updatePost(post.id, data)
         : await createPost(data);
