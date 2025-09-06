@@ -3,7 +3,7 @@
 
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import { Code2, BookOpen, Briefcase, Menu } from "lucide-react";
+import { Code2, BookOpen, Briefcase, Menu, ShieldCheck } from "lucide-react";
 import { useState, useEffect } from "react";
 import { onAuthStateChanged } from "firebase/auth";
 import { auth } from "@/lib/firebase";
@@ -79,6 +79,20 @@ export default function Header() {
           {navLinks.map((link) => (
             <NavLink key={link.href} {...link} />
           ))}
+           {currentUser?.role === 'admin' && (
+             <Link
+                href="/admin"
+                className={cn(
+                    "flex items-center gap-2 rounded-md px-3 py-2 text-sm font-medium transition-colors",
+                    pathname.startsWith('/admin')
+                        ? "bg-primary/10 text-primary"
+                        : "text-foreground/70 hover:bg-foreground/5 hover:text-foreground"
+                )}
+                >
+                <ShieldCheck className="h-4 w-4" />
+                Quản trị
+            </Link>
+          )}
         </nav>
         <div className="ml-auto hidden items-center gap-2 md:flex">
           <AuthButton user={currentUser}/>
@@ -106,6 +120,21 @@ export default function Header() {
                   {navLinks.map((link) => (
                     <NavLink key={link.href} {...link} />
                   ))}
+                   {currentUser?.role === 'admin' && (
+                    <Link
+                        href="/admin"
+                        className={cn(
+                            "flex items-center gap-2 rounded-md px-3 py-2 text-sm font-medium transition-colors",
+                            pathname.startsWith('/admin')
+                                ? "bg-primary/10 text-primary"
+                                : "text-foreground/70 hover:bg-foreground/5 hover:text-foreground"
+                        )}
+                        onClick={() => setIsMobileMenuOpen(false)}
+                        >
+                        <ShieldCheck className="h-4 w-4" />
+                        Quản trị
+                    </Link>
+                  )}
                 </nav>
               </div>
             </SheetContent>
@@ -115,3 +144,5 @@ export default function Header() {
     </header>
   );
 }
+
+    
