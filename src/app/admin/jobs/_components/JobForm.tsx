@@ -1,3 +1,4 @@
+
 "use client";
 
 import { useForm } from "react-hook-form";
@@ -21,9 +22,10 @@ import { LoaderCircle, Upload } from "lucide-react";
 
 interface JobFormProps {
   job?: Job | null;
+  userId?: string;
 }
 
-export default function JobForm({ job }: JobFormProps) {
+export default function JobForm({ job, userId }: JobFormProps) {
   const router = useRouter();
   const { toast } = useToast();
   const [isSubmitting, setIsSubmitting] = useState(false);
@@ -43,6 +45,7 @@ export default function JobForm({ job }: JobFormProps) {
       description: job?.description ?? "",
       companyLogoUrl: job?.companyLogoUrl ?? "",
       companyLogoHint: job?.companyLogoHint ?? "",
+      user_id: job?.user_id ?? userId ?? "",
     },
   });
 
@@ -55,6 +58,12 @@ export default function JobForm({ job }: JobFormProps) {
       form.setValue("slug", slug, { shouldValidate: true });
     }
   }, [titleValue, isEditMode, form]);
+
+  useEffect(() => {
+    if (userId && !form.getValues('user_id')) {
+        form.setValue('user_id', userId);
+    }
+  }, [userId, form]);
 
   const handleFileChange = async (event: React.ChangeEvent<HTMLInputElement>) => {
     const file = event.target.files?.[0];
@@ -87,6 +96,14 @@ export default function JobForm({ job }: JobFormProps) {
   };
 
   async function onSubmit(data: JobFormData) {
+    if (!data.user_id) {
+        toast({
+            variant: "destructive",
+            title: "Lỗi",
+            description: "Không tìm thấy thông tin người dùng. Vui lòng đăng nhập lại.",
+        });
+        return;
+    }
     setIsSubmitting(true);
     try {
       const result = isEditMode
@@ -101,7 +118,11 @@ export default function JobForm({ job }: JobFormProps) {
         router.push("/admin/jobs");
         router.refresh();
       } else {
-        throw new Error(result.error);
+        toast({
+            variant: "destructive",
+            title: "Đã có lỗi xảy ra",
+            description: result.error || "Thao tác thất bại. Vui lòng thử lại."
+        });
       }
     } catch (error: any) {
       toast({
@@ -153,6 +174,8 @@ export default function JobForm({ job }: JobFormProps) {
             </div>
             
             <FormField control={form.control} name="slug" render={({ field }) => <Input type="hidden" {...field} />} />
+            <FormField control={form.control} name="user_id" render={({ field }) => <Input type="hidden" {...field} />} />
+
 
              <div className="grid grid-cols-1 gap-6 md:grid-cols-3">
                 <FormField

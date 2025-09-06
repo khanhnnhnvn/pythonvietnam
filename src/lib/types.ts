@@ -1,3 +1,4 @@
+
 import { z } from "zod";
 
 export interface BlogPost {
@@ -29,6 +30,7 @@ export interface Job {
   companyLogoHint: string;
   created_at: string;
   application_count?: number;
+  user_id: string;
 }
 
 export interface Application {
@@ -55,6 +57,7 @@ export const postFormSchema = z.object({
 export type PostFormData = z.infer<typeof postFormSchema>;
 
 export const jobFormSchema = z.object({
+  user_id: z.string().min(1, { message: "User ID is required." }),
   title: z.string().min(5, { message: "Chức danh phải có ít nhất 5 ký tự." }),
   slug: z.string().min(1, { message: "Slug không được để trống." }),
   company: z.string().min(2, { message: "Tên công ty là bắt buộc." }),

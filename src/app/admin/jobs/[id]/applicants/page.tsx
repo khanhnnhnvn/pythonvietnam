@@ -1,13 +1,20 @@
-import { getJobById, getApplicationsByJobId } from "@/app/actions";
-import { notFound } from "next/navigation";
+
+import { getJobById, getApplicationsByJobId, getUserById } from "@/app/actions";
+import { notFound, redirect } from "next/navigation";
 import Link from "next/link";
 import { Card, CardHeader, CardTitle, CardDescription, CardContent } from "@/components/ui/card";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Button } from "@/components/ui/button";
 import { FileText, ArrowLeft } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
+import { getServerSideUser } from "@/lib/firebase-admin";
 
 export default async function JobApplicantsPage({ params }: { params: { id: string } }) {
+    const user = await getServerSideUser();
+    if (!user) {
+        redirect('/admin/jobs');
+    }
+
     const id = Number(params.id);
     if (isNaN(id)) {
         notFound();
@@ -16,6 +23,12 @@ export default async function JobApplicantsPage({ params }: { params: { id: stri
     const job = await getJobById(id);
     if (!job) {
         notFound();
+    }
+
+    // Authorization check
+    const appUser = await getUserById(user.uid);
+    if (appUser?.role !== 'admin' && job.user_id !== user.uid) {
+        redirect('/admin/jobs');
     }
 
     const applications = await getApplicationsByJobId(id);

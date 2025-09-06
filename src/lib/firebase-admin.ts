@@ -5,18 +5,23 @@ import { getAuth } from 'firebase-admin/auth';
 const serviceAccount = process.env.FIREBASE_SERVICE_ACCOUNT_KEY;
 
 if (!admin.apps.length) {
-  if (serviceAccount) {
-    admin.initializeApp({
-      credential: admin.credential.cert(JSON.parse(serviceAccount)),
-    });
+  // Ensure serviceAccount is a non-empty string before trying to parse
+  if (serviceAccount && typeof serviceAccount === 'string' && serviceAccount.trim() !== '') {
+    try {
+        admin.initializeApp({
+            credential: admin.credential.cert(JSON.parse(serviceAccount)),
+        });
+    } catch (e: any) {
+        console.error("Failed to parse FIREBASE_SERVICE_ACCOUNT_KEY. Make sure it's a valid JSON string.", e.message);
+    }
   } else {
     console.warn(
-      'Firebase Admin SDK not initialized. FIREBASE_SERVICE_ACCOUNT_KEY is missing.'
+      'Firebase Admin SDK not initialized. FIREBASE_SERVICE_ACCOUNT_KEY is missing or empty.'
     );
   }
 }
 
-const adminAuth = serviceAccount ? getAuth() : null;
+const adminAuth = admin.apps.length ? getAuth() : null;
 
 export { adminAuth };
 

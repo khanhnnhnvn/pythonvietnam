@@ -1,9 +1,11 @@
+
 'use server';
 
 import type { BlogPost, Job, PostFormData, JobFormData, ApplicationFormData, Application } from '@/lib/types';
 import mysql from 'mysql2/promise';
 import fs from 'node:fs/promises';
 import path from 'node:path';
+import { getServerSideUser } from '@/lib/firebase-admin';
 
 type UserData = {
   uid: string;
@@ -210,17 +212,40 @@ export async function uploadFile(formData: FormData) {
 
 // Job Actions
 export async function getJobs(): Promise<Job[]> {
+    const user = await getServerSideUser();
+    if (!user) {
+        // Return public jobs if not logged in
+        return [];
+    }
+
+    const appUser = await getUserById(user.uid);
     let connection;
     try {
         connection = await mysql.createConnection(dbConfig);
-        const sql = `
-            SELECT j.*, COUNT(a.id) as application_count
-            FROM jobs j
-            LEFT JOIN applications a ON j.id = a.job_id
-            GROUP BY j.id
-            ORDER BY j.created_at DESC
-        `;
-        const [rows] = await connection.execute<mysql.RowDataPacket[]>(sql);
+        let sql: string;
+        let params: (string | number)[] = [];
+
+        if (appUser?.role === 'admin') {
+            sql = `
+                SELECT j.*, COUNT(a.id) as application_count
+                FROM jobs j
+                LEFT JOIN applications a ON j.id = a.job_id
+                GROUP BY j.id
+                ORDER BY j.created_at DESC
+            `;
+        } else {
+             sql = `
+                SELECT j.*, COUNT(a.id) as application_count
+                FROM jobs j
+                LEFT JOIN applications a ON j.id = a.job_id
+                WHERE j.user_id = ?
+                GROUP BY j.id
+                ORDER BY j.created_at DESC
+            `;
+            params.push(user.uid);
+        }
+        
+        const [rows] = await connection.execute<mysql.RowDataPacket[]>(sql, params);
         return rows as Job[];
     } catch (error) {
         console.error('Failed to fetch jobs:', error);
@@ -266,14 +291,19 @@ export async function getJobBySlug(slug: string): Promise<Job | null> {
 }
 
 export async function createJob(data: JobFormData) {
+    const user = await getServerSideUser();
+    if (!user) {
+        return { success: false, error: 'Unauthorized: You must be logged in to create a job.' };
+    }
+
     let connection;
     try {
         connection = await mysql.createConnection(dbConfig);
         const sql = `
-            INSERT INTO jobs (title, slug, company, location, type, category, description, companyLogoUrl, companyLogoHint)
-            VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?);
+            INSERT INTO jobs (user_id, title, slug, company, location, type, category, description, companyLogoUrl, companyLogoHint)
+            VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?);
         `;
-        await connection.execute(sql, [data.title, data.slug, data.company, data.location, data.type, data.category, data.description, data.companyLogoUrl, data.companyLogoHint]);
+        await connection.execute(sql, [user.uid, data.title, data.slug, data.company, data.location, data.type, data.category, data.description, data.companyLogoUrl, data.companyLogoHint]);
         return { success: true };
     } catch (error: any) {
         console.error('Failed to create job:', error);
@@ -286,9 +316,24 @@ export async function createJob(data: JobFormData) {
 }
 
 export async function updateJob(id: number, data: JobFormData) {
+    const user = await getServerSideUser();
+    if (!user) {
+        return { success: false, error: 'Unauthorized' };
+    }
+
     let connection;
     try {
         connection = await mysql.createConnection(dbConfig);
+        const jobToUpdate = await getJobById(id);
+        if (!jobToUpdate) {
+            return { success: false, error: 'Job not found.' };
+        }
+
+        const appUser = await getUserById(user.uid);
+        if (appUser?.role !== 'admin' && jobToUpdate.user_id !== user.uid) {
+            return { success: false, error: 'Permission denied.' };
+        }
+        
         const sql = `
             UPDATE jobs SET title = ?, slug = ?, company = ?, location = ?, type = ?, category = ?, description = ?, companyLogoUrl = ?, companyLogoHint = ?
             WHERE id = ?;
@@ -306,9 +351,25 @@ export async function updateJob(id: number, data: JobFormData) {
 }
 
 export async function deleteJob(id: number) {
+     const user = await getServerSideUser();
+    if (!user) {
+        return { success: false, error: 'Unauthorized' };
+    }
+    
     let connection;
     try {
         connection = await mysql.createConnection(dbConfig);
+
+        const jobToDelete = await getJobById(id);
+        if (!jobToDelete) {
+             return { success: false, error: 'Job not found.' };
+        }
+
+        const appUser = await getUserById(user.uid);
+        if (appUser?.role !== 'admin' && jobToDelete.user_id !== user.uid) {
+            return { success: false, error: 'Permission denied.' };
+        }
+
         await connection.execute('DELETE FROM jobs WHERE id = ?', [id]);
         return { success: true };
     } catch (error: any) {
@@ -323,9 +384,25 @@ export async function deleteJob(id: number) {
 
 // Application Actions
 export async function getApplicationsByJobId(jobId: number): Promise<Application[]> {
+    const user = await getServerSideUser();
+    if (!user) {
+        return [];
+    }
+
     let connection;
     try {
         connection = await mysql.createConnection(dbConfig);
+        
+        // Check if user has permission to view applications for this job
+        const job = await getJobById(jobId);
+        if (!job) {
+            throw new Error("Job not found");
+        }
+        const appUser = await getUserById(user.uid);
+        if (appUser?.role !== 'admin' && job.user_id !== user.uid) {
+             throw new Error("Permission denied to view applications for this job.");
+        }
+
         const [rows] = await connection.execute<mysql.RowDataPacket[]>('SELECT * FROM applications WHERE job_id = ? ORDER BY created_at DESC', [jobId]);
         return rows as Application[];
     } catch (error) {
@@ -358,3 +435,4 @@ export async function createApplication(data: ApplicationFormData) {
         }
     }
 }
+
