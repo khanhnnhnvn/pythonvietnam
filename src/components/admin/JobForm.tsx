@@ -227,7 +227,7 @@ export default function JobForm({ job }: JobFormProps) {
             <FormItem>
               <FormLabel>Mô tả công việc</FormLabel>
               <FormControl>
-                <Textarea placeholder="Mô tả chi tiết về công việc..." {...field} />
+                <Textarea className="min-h-[250px]" placeholder="Mô tả chi tiết về công việc..." {...field} />
               </FormControl>
               <FormMessage />
             </FormItem>
