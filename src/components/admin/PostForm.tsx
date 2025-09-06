@@ -24,7 +24,6 @@ import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { LoaderCircle, Wand2 } from "lucide-react";
 import Image from "next/image";
-import RichTextEditor from "../common/RichTextEditor";
 
 interface PostFormProps {
   post?: BlogPost;
@@ -260,7 +259,7 @@ export default function PostForm({ post }: PostFormProps) {
             <FormItem>
               <FormLabel>Nội dung</FormLabel>
               <FormControl>
-                 <RichTextEditor {...field} />
+                 <Textarea className="min-h-[250px]" placeholder="Nội dung chi tiết của bài viết..." {...field} />
               </FormControl>
               <FormMessage />
             </FormItem>
