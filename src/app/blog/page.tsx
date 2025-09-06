@@ -1,0 +1,42 @@
+import { blogPosts, blogCategories } from "@/lib/data";
+import BlogPostCard from "@/components/blog/BlogPostCard";
+import BlogCategoryFilter from "@/components/blog/BlogCategoryFilter";
+
+export const metadata = {
+  title: "Bài viết | Python Vietnam",
+  description: "Khám phá các bài viết, hướng dẫn và chia sẻ kiến thức về Python.",
+};
+
+export default function BlogPage({
+  searchParams,
+}: {
+  searchParams: { [key: string]: string | undefined };
+}) {
+  const category = searchParams.category;
+
+  const filteredPosts = category && category !== 'all'
+    ? blogPosts.filter((post) => post.category === category)
+    : blogPosts;
+    
+  return (
+    <div className="container py-8 md:py-12">
+      <div className="mb-8 flex flex-col items-center text-center">
+        <h1 className="text-3xl font-bold tracking-tighter sm:text-4xl">Góc chia sẻ</h1>
+        <p className="mt-2 max-w-2xl text-muted-foreground">
+          Khám phá các bài viết, hướng dẫn và chia sẻ kiến thức về Python từ cộng đồng.
+          Chọn một danh mục để bắt đầu.
+        </p>
+      </div>
+
+      <div className="mb-8 flex justify-center">
+        <BlogCategoryFilter />
+      </div>
+
+      <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-3">
+        {filteredPosts.map((post) => (
+          <BlogPostCard key={post.slug} post={post} />
+        ))}
+      </div>
+    </div>
+  );
+}

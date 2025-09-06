@@ -1,0 +1,83 @@
+"use client";
+
+import Link from "next/link";
+import { usePathname } from "next/navigation";
+import { Code2, BookOpen, Briefcase, Menu } from "lucide-react";
+import { useState } from "react";
+
+import { Button } from "@/components/ui/button";
+import { Sheet, SheetContent, SheetTrigger } from "@/components/ui/sheet";
+import { cn } from "@/lib/utils";
+
+const navLinks = [
+  { href: "/blog", label: "Bài viết", icon: BookOpen },
+  { href: "/jobs", label: "Việc làm", icon: Briefcase },
+];
+
+export default function Header() {
+  const pathname = usePathname();
+  const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
+
+  const NavLink = ({ href, label, icon: Icon }: typeof navLinks[0]) => (
+    <Link
+      href={href}
+      className={cn(
+        "flex items-center gap-2 rounded-md px-3 py-2 text-sm font-medium transition-colors",
+        pathname.startsWith(href)
+          ? "bg-primary/10 text-primary"
+          : "text-foreground/70 hover:bg-foreground/5 hover:text-foreground"
+      )}
+      onClick={() => setIsMobileMenuOpen(false)}
+    >
+      <Icon className="h-4 w-4" />
+      {label}
+    </Link>
+  );
+
+  return (
+    <header className="sticky top-0 z-50 w-full border-b bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60">
+      <div className="container flex h-14 items-center">
+        <Link
+          href="/"
+          className="mr-6 flex items-center gap-2"
+          onClick={() => setIsMobileMenuOpen(false)}
+        >
+          <Code2 className="h-6 w-6 text-primary" />
+          <span className="font-bold text-foreground">Python Vietnam</span>
+        </Link>
+        <nav className="hidden items-center gap-2 md:flex">
+          {navLinks.map((link) => (
+            <NavLink key={link.href} {...link} />
+          ))}
+        </nav>
+        <div className="flex flex-1 items-center justify-end md:hidden">
+          <Sheet open={isMobileMenuOpen} onOpenChange={setIsMobileMenuOpen}>
+            <SheetTrigger asChild>
+              <Button variant="ghost" size="icon">
+                <Menu className="h-5 w-5" />
+                <span className="sr-only">Mở menu</span>
+              </Button>
+            </SheetTrigger>
+            <SheetContent side="left">
+              <div className="flex flex-col p-4">
+                <Link
+                  href="/"
+                  className="mb-8 flex items-center gap-2"
+                  onClick={() => setIsMobileMenuOpen(false)}
+                >
+                  <Code2 className="h-6 w-6 text-primary" />
+                  <span className="font-bold text-foreground">Python Vietnam</span>
+                </Link>
+                <nav className="flex flex-col gap-2">
+                  {navLinks.map((link) => (
+                    <NavLink key={link.href} {...link} />
+                  ))}
+                </nav>
+              </div>
+            </SheetContent>
+          </Sheet>
+        </div>
+      </div>
+    </header>
+  );
+}
