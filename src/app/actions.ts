@@ -21,11 +21,11 @@ export async function saveUser(user: UserData) {
   try {
     connection = await mysql.createConnection(dbConfig);
     const sql = `
-      INSERT INTO users (id, email, name, avatar_url, created_at, last_login_at)
+      INSERT INTO users (id, email, name, photo_url, created_at, last_login_at)
       VALUES (?, ?, ?, ?, NOW(), NOW())
       ON DUPLICATE KEY UPDATE
         name = VALUES(name),
-        avatar_url = VALUES(avatar_url),
+        photo_url = VALUES(photo_url),
         last_login_at = NOW();
     `;
     await connection.execute(sql, [user.uid, user.email, user.name, user.avatar]);
