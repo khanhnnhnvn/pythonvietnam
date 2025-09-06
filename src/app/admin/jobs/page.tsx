@@ -1,6 +1,6 @@
 
 import Link from "next/link";
-import { PlusCircle, MoreHorizontal, User, Eye } from "lucide-react";
+import { PlusCircle, MoreHorizontal, User } from "lucide-react";
 import {
   Table,
   TableBody,
@@ -26,21 +26,12 @@ import {
   CardTitle,
 } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
-import { getJobs, deleteJob, getUserById } from "@/app/actions";
-import { getServerSideUser } from "@/lib/firebase-admin";
+import { getJobs, deleteJob } from "@/app/actions";
 import DeleteButton from "@/components/admin/DeleteButton";
 
 
 export default async function AdminJobsPage() {
-  const serverUser = await getServerSideUser();
-  const appUser = serverUser ? await getUserById(serverUser.uid) : null;
   const jobs = await getJobs(true);
-
-  const canManageJob = (jobUserId: string) => {
-    if (!appUser) return false;
-    if (appUser.role === 'admin') return true;
-    return appUser.uid === jobUserId;
-  };
 
   return (
     <Card>
@@ -86,29 +77,27 @@ export default async function AdminJobsPage() {
                   </Badge>
                 </TableCell>
                 <TableCell>
-                  {canManageJob(job.user_id) && (
-                     <DropdownMenu>
-                        <DropdownMenuTrigger asChild>
-                          <Button aria-haspopup="true" size="icon" variant="ghost">
-                            <MoreHorizontal className="h-4 w-4" />
-                            <span className="sr-only">Toggle menu</span>
-                          </Button>
-                        </DropdownMenuTrigger>
-                        <DropdownMenuContent align="end">
-                          <DropdownMenuLabel>Hành động</DropdownMenuLabel>
-                          <DropdownMenuItem asChild>
-                            <Link href={`/admin/jobs/${job.id}/applicants`}>Xem ứng viên</Link>
-                          </DropdownMenuItem>
-                          <DropdownMenuSeparator />
-                          <DropdownMenuItem asChild>
-                            <Link href={`/admin/jobs/edit/${job.id}`}>Sửa</Link>
-                          </DropdownMenuItem>
-                          <DropdownMenuItem asChild>
-                            <DeleteButton itemId={job.id} action={deleteJob} />
-                          </DropdownMenuItem>
-                        </DropdownMenuContent>
-                      </DropdownMenu>
-                  )}
+                   <DropdownMenu>
+                      <DropdownMenuTrigger asChild>
+                        <Button aria-haspopup="true" size="icon" variant="ghost">
+                          <MoreHorizontal className="h-4 w-4" />
+                          <span className="sr-only">Toggle menu</span>
+                        </Button>
+                      </DropdownMenuTrigger>
+                      <DropdownMenuContent align="end">
+                        <DropdownMenuLabel>Hành động</DropdownMenuLabel>
+                        <DropdownMenuItem asChild>
+                          <Link href={`/admin/jobs/${job.id}/applicants`}>Xem ứng viên</Link>
+                        </DropdownMenuItem>
+                        <DropdownMenuSeparator />
+                        <DropdownMenuItem asChild>
+                          <Link href={`/admin/jobs/edit/${job.id}`}>Sửa</Link>
+                        </DropdownMenuItem>
+                        <DropdownMenuItem asChild>
+                          <DeleteButton itemId={job.id} action={deleteJob} />
+                        </DropdownMenuItem>
+                      </DropdownMenuContent>
+                    </DropdownMenu>
                 </TableCell>
               </TableRow>
             ))}
@@ -118,5 +107,3 @@ export default async function AdminJobsPage() {
     </Card>
   );
 }
-
-    
