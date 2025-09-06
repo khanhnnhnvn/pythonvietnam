@@ -1,17 +1,9 @@
 "use client";
 
 import { useRouter, useSearchParams } from "next/navigation";
-import { Search, MapPin } from "lucide-react";
+import { Search, MapPin, List } from "lucide-react";
 import { Input } from "@/components/ui/input";
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from "@/components/ui/select";
 import { Button } from "../ui/button";
-import { jobCategories } from "@/lib/data";
 import { Card, CardContent } from "../ui/card";
 
 export default function JobSearchFilters() {
@@ -28,7 +20,7 @@ export default function JobSearchFilters() {
     const params = new URLSearchParams();
     if (query) params.set("q", query);
     if (location) params.set("location", location);
-    if (category && category !== "all") params.set("category", category);
+    if (category) params.set("category", category);
 
     router.push(`/jobs?${params.toString()}`);
   };
@@ -69,24 +61,18 @@ export default function JobSearchFilters() {
           </div>
           <div className="lg:col-span-1">
             <label htmlFor="category" className="mb-2 block text-sm font-medium">
-              Danh mục
+              Lĩnh vực
             </label>
-            <Select
-              name="category"
-              defaultValue={searchParams.get("category") ?? "all"}
-            >
-              <SelectTrigger id="category">
-                <SelectValue placeholder="Tất cả danh mục" />
-              </SelectTrigger>
-              <SelectContent>
-                <SelectItem value="all">Tất cả danh mục</SelectItem>
-                {jobCategories.map((cat) => (
-                  <SelectItem key={cat} value={cat}>
-                    {cat}
-                  </SelectItem>
-                ))}
-              </SelectContent>
-            </Select>
+             <div className="relative">
+              <List className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
+              <Input
+                id="category"
+                name="category"
+                placeholder="Backend, Data Science..."
+                defaultValue={searchParams.get("category") ?? ""}
+                className="pl-10"
+              />
+            </div>
           </div>
           <Button type="submit" className="w-full bg-accent text-accent-foreground hover:bg-accent/90">
             <Search className="mr-2 h-4 w-4" />

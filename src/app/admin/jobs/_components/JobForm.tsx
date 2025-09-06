@@ -6,7 +6,6 @@ import { useRouter } from "next/navigation";
 import { useState, useRef, useEffect } from "react";
 import Image from "next/image";
 import { jobFormSchema, type JobFormData, type Job } from "@/lib/types";
-import { jobCategories } from "@/lib/data";
 import { useToast } from "@/hooks/use-toast";
 import { createJob, updateJob, uploadFile } from "@/app/actions";
 import { generateSlug } from "@/lib/utils";
@@ -40,7 +39,7 @@ export default function JobForm({ job }: JobFormProps) {
       company: job?.company ?? "",
       location: job?.location ?? "",
       type: job?.type ?? 'Toàn thời gian',
-      category: job?.category ?? 'Backend',
+      category: job?.category ?? "",
       description: job?.description ?? "",
       companyLogoUrl: job?.companyLogoUrl ?? "",
       companyLogoHint: job?.companyLogoHint ?? "",
@@ -197,18 +196,9 @@ export default function JobForm({ job }: JobFormProps) {
                     render={({ field }) => (
                         <FormItem>
                             <FormLabel>Lĩnh vực</FormLabel>
-                             <Select onValueChange={field.onChange} defaultValue={field.value}>
-                                <FormControl>
-                                <SelectTrigger>
-                                    <SelectValue placeholder="Chọn lĩnh vực" />
-                                </SelectTrigger>
-                                </FormControl>
-                                <SelectContent>
-                                    {jobCategories.map(cat => (
-                                        <SelectItem key={cat} value={cat}>{cat}</SelectItem>
-                                    ))}
-                                </SelectContent>
-                            </Select>
+                             <FormControl>
+                                <Input placeholder="Ví dụ: Backend, Data Science" {...field} />
+                            </FormControl>
                             <FormMessage />
                         </FormItem>
                     )}

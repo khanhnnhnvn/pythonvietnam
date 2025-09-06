@@ -23,7 +23,7 @@ export interface Job {
   company: string;
   location: string;
   type: 'Toàn thời gian' | 'Bán thời gian' | 'Hợp đồng';
-  category: JobCategory;
+  category: string;
   description: string;
   companyLogoUrl: string;
   companyLogoHint: string;
@@ -49,7 +49,7 @@ export const jobFormSchema = z.object({
   company: z.string().min(2, { message: "Tên công ty là bắt buộc." }),
   location: z.string().min(2, { message: "Địa điểm là bắt buộc." }),
   type: z.enum(['Toàn thời gian', 'Bán thời gian', 'Hợp đồng']),
-  category: z.enum(['Backend', 'Frontend', 'Full-stack', 'DevOps', 'Data Science', 'Machine Learning']),
+  category: z.string().min(2, { message: "Lĩnh vực là bắt buộc." }),
   description: z.string().min(10, { message: "Mô tả phải có ít nhất 10 ký tự." }),
   companyLogoUrl: z.string().min(1, "Vui lòng tải lên logo."),
   companyLogoHint: z.string().max(40, { message: "Gợi ý ảnh không được quá 40 ký tự."}).optional(),
