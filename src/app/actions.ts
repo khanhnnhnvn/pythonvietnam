@@ -213,7 +213,7 @@ export async function getJobs(): Promise<Job[]> {
     let connection;
     try {
         connection = await mysql.createConnection(dbConfig);
-        const [rows] = await connection.execute<mysql.RowDataPacket[]>('SELECT *, slug FROM jobs ORDER BY created_at DESC');
+        const [rows] = await connection.execute<mysql.RowDataPacket[]>('SELECT * FROM jobs ORDER BY created_at DESC');
         return rows as Job[];
     } catch (error) {
         console.error('Failed to fetch jobs:', error);
@@ -313,4 +313,3 @@ export async function deleteJob(id: number) {
         }
     }
 }
-
