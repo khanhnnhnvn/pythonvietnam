@@ -10,7 +10,7 @@
 import {ai} from '@/ai/genkit';
 import {z} from 'genkit';
 
-export const ParseCVInputSchema = z.object({
+const ParseCVInputSchema = z.object({
   cvDataUri: z
     .string()
     .describe(
@@ -19,7 +19,7 @@ export const ParseCVInputSchema = z.object({
 });
 export type ParseCVInput = z.infer<typeof ParseCVInputSchema>;
 
-export const ParseCVOutputSchema = z.object({
+const ParseCVOutputSchema = z.object({
   name: z.string().describe("The full name of the applicant. Return empty string if not found."),
   email: z.string().describe("The email address of the applicant. Return empty string if not found."),
   phone: z.string().describe("The phone number of the applicant. Return empty string if not found."),
