@@ -4,7 +4,7 @@ import { Button } from "@/components/ui/button";
 import { Card, CardHeader, CardTitle, CardDescription, CardContent } from "@/components/ui/card";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Badge } from "@/components/ui/badge";
-import { PlusCircle, MoreHorizontal, Users, Shield, Lock } from "lucide-react";
+import { PlusCircle, MoreHorizontal, Users, Pencil, Trash2 } from "lucide-react";
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuLabel, DropdownMenuTrigger, DropdownMenuSeparator } from "@/components/ui/dropdown-menu";
 import DeleteJobDialog from "./_components/DeleteJobDialog";
 import { getServerSideUser } from "@/lib/firebase-admin";
@@ -69,14 +69,16 @@ export default async function AdminJobsPage() {
                   <TableCell className="hidden sm:table-cell">{job.location}</TableCell>
                    <TableCell className="text-center">
                     {canEditOrDelete(job) ? (
-                        <Link href={`/admin/jobs/${job.id}/applicants`}>
-                            <Badge variant="secondary" className="cursor-pointer hover:bg-primary/20">
-                                {job.application_count ?? 0}
-                            </Badge>
-                        </Link>
+                        <Button variant="ghost" size="sm" asChild>
+                            <Link href={`/admin/jobs/${job.id}/applicants`}>
+                                <Badge variant="secondary" className="cursor-pointer hover:bg-primary/20">
+                                    {job.application_count ?? 0}
+                                </Badge>
+                            </Link>
+                        </Button>
                     ) : (
-                        <Badge variant="outline" className="cursor-not-allowed">
-                            <Lock className="h-3 w-3"/>
+                         <Badge variant="outline" className="cursor-not-allowed">
+                            {job.application_count ?? 0}
                         </Badge>
                     )}
                   </TableCell>
@@ -91,12 +93,14 @@ export default async function AdminJobsPage() {
                       <DropdownMenuContent align="end">
                         <DropdownMenuLabel>Hành động</DropdownMenuLabel>
                          <DropdownMenuItem asChild>
-                           <Link href={`/admin/jobs/${job.id}/applicants`} className="flex items-center gap-2">
+                           <Link href={`/admin/jobs/${job.id}/applicants`} className="flex items-center gap-2 cursor-pointer">
                             <Users /> Xem ứng viên
                            </Link>
                         </DropdownMenuItem>
                         <DropdownMenuItem asChild>
-                          <Link href={`/admin/jobs/${job.id}/edit`}>Sửa</Link>
+                          <Link href={`/admin/jobs/${job.id}/edit`} className="flex items-center gap-2 cursor-pointer">
+                            <Pencil /> Sửa
+                          </Link>
                         </DropdownMenuItem>
                         <DropdownMenuSeparator />
                         <DeleteJobDialog jobId={job.id} />
@@ -118,5 +122,3 @@ export default async function AdminJobsPage() {
     </Card>
   );
 }
-
-    
