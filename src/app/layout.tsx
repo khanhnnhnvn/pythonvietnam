@@ -17,7 +17,7 @@ const beVietnamPro = Be_Vietnam_Pro({
 });
 
 const ptSans = PT_Sans({
-  subsets: ['latin', 'vietnamese'],
+  subsets: ['latin', 'latin-ext'],
   weight: ['400', '700'],
   variable: '--font-headline',
 });
