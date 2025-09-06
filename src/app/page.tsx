@@ -15,7 +15,7 @@ export default async function Home() {
 
   return (
     <div className="flex flex-col">
-      <section className="relative w-full bg-primary/10 py-20 md:py-32">
+      <section className="relative w-full bg-primary/10 py-12 md:py-20">
         <div className="container text-center">
           <div className="absolute inset-0 z-0 overflow-hidden">
             <Image
@@ -52,7 +52,7 @@ export default async function Home() {
         </div>
       </section>
 
-      <section className="container py-16 md:py-24">
+      <section className="container py-12 md:py-16">
         <div className="flex flex-col items-center text-center">
           <h2 className="text-3xl font-bold tracking-tighter sm:text-4xl">Bài viết Mới nhất</h2>
           <p className="mt-2 max-w-[600px] text-foreground/70">
@@ -73,7 +73,7 @@ export default async function Home() {
         </div>
       </section>
 
-      <section className="w-full bg-primary/10 py-16 md:py-24">
+      <section className="w-full bg-primary/10 py-12 md:py-16">
         <div className="container">
           <div className="flex flex-col items-center text-center">
             <h2 className="text-3xl font-bold tracking-tighter sm:text-4xl">Cơ hội Việc làm</h2>
