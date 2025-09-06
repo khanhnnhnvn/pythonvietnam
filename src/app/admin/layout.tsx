@@ -1,3 +1,4 @@
+
 'use client';
 
 import * as React from "react";
@@ -33,8 +34,10 @@ export default function AdminLayout({
     const unsubscribe = onAuthStateChanged(auth, async (firebaseUser: User | null) => {
       if (firebaseUser) {
         const appUser = await getUserById(firebaseUser.uid);
-        if (appUser?.role !== 'admin') {
-          router.push('/');
+        // Allow both admin and regular users to access the admin area
+        // Specific permissions will be handled on each page
+        if (!appUser) {
+             router.push('/');
         } else {
           setUser(appUser);
           setLoading(false);
@@ -54,6 +57,24 @@ export default function AdminLayout({
       </div>
     );
   }
+  
+  // Admin can see everything. Non-admins have restrictions handled on the pages.
+   if (user.role !== 'admin') {
+      const nonAdminAllowedPaths = ['/admin/jobs', '/admin/jobs/new'];
+      const currentPath = window.location.pathname;
+      const isAllowed = nonAdminAllowedPaths.some(path => currentPath.startsWith(path)) || currentPath === '/admin';
+      
+      if (!isAllowed && !currentPath.match(/^\/admin\/jobs\/\d+(\/edit|\/applicants)?$/)) {
+          router.push('/admin/jobs');
+          return (
+             <div className="flex h-screen w-full items-center justify-center bg-background">
+                <LoaderCircle className="h-8 w-8 animate-spin" />
+                <p>Redirecting...</p>
+             </div>
+          );
+      }
+  }
+
 
   return (
     <html lang="vi">
@@ -65,26 +86,30 @@ export default function AdminLayout({
                 <SidebarHeader>
                   <div className="flex items-center gap-2">
                     <SidebarTrigger />
-                    <h2 className="text-lg font-semibold">Admin</h2>
+                    <h2 className="text-lg font-semibold">Dashboard</h2>
                   </div>
                 </SidebarHeader>
                 <SidebarMenu>
-                  <SidebarMenuItem>
-                    <SidebarMenuButton asChild>
-                      <Link href="/admin">
-                        <LayoutDashboard />
-                        Dashboard
-                      </Link>
-                    </SidebarMenuButton>
-                  </SidebarMenuItem>
-                  <SidebarMenuItem>
-                    <SidebarMenuButton asChild>
-                      <Link href="/admin/posts">
-                        <BookText />
-                        Bài viết
-                      </Link>
-                    </SidebarMenuButton>
-                  </SidebarMenuItem>
+                  {user.role === 'admin' && (
+                    <SidebarMenuItem>
+                        <SidebarMenuButton asChild>
+                        <Link href="/admin">
+                            <LayoutDashboard />
+                            Tổng quan
+                        </Link>
+                        </SidebarMenuButton>
+                    </SidebarMenuItem>
+                  )}
+                  {user.role === 'admin' && (
+                     <SidebarMenuItem>
+                        <SidebarMenuButton asChild>
+                        <Link href="/admin/posts">
+                            <BookText />
+                            Bài viết
+                        </Link>
+                        </SidebarMenuButton>
+                    </SidebarMenuItem>
+                  )}
                   <SidebarMenuItem>
                     <SidebarMenuButton asChild>
                       <Link href="/admin/jobs">
@@ -99,7 +124,8 @@ export default function AdminLayout({
             <div className="flex-1 flex flex-col">
               <AdminHeader user={user} />
               <main className="flex-1 p-4 sm:p-6 lg:p-8">
-                {children}
+                {/* Pass user to children */}
+                {React.cloneElement(children as React.ReactElement, { user })}
               </main>
             </div>
           </div>

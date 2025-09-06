@@ -1,9 +1,28 @@
+
 import { Card, CardHeader, CardTitle, CardContent } from "@/components/ui/card";
 import { BookText, Briefcase } from "lucide-react";
 import Link from "next/link";
 import { getPosts, getJobs } from "@/app/actions";
+import { redirect } from "next/navigation";
 
-export default async function AdminDashboardPage() {
+type AppUser = {
+  uid: string;
+  email?: string;
+  name?: string | null;
+  avatar?: string;
+  role?: string;
+};
+
+interface AdminDashboardPageProps {
+  user?: AppUser;
+}
+
+export default async function AdminDashboardPage({ user }: AdminDashboardPageProps) {
+  // If user is not admin, redirect them to the jobs page.
+  if (user?.role !== 'admin') {
+    redirect('/admin/jobs');
+  }
+
   const posts = await getPosts();
   const jobs = await getJobs();
 

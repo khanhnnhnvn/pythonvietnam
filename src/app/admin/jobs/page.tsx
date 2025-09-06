@@ -1,27 +1,45 @@
+
 import Link from "next/link";
-import { getJobs, getUserById } from "@/app/actions";
+import { getJobs } from "@/app/actions";
 import { Button } from "@/components/ui/button";
 import { Card, CardHeader, CardTitle, CardDescription, CardContent } from "@/components/ui/card";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Badge } from "@/components/ui/badge";
-import { PlusCircle, MoreHorizontal, Users, Pencil, Trash2 } from "lucide-react";
+import { PlusCircle, MoreHorizontal, Users, Pencil } from "lucide-react";
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuLabel, DropdownMenuTrigger, DropdownMenuSeparator } from "@/components/ui/dropdown-menu";
 import DeleteJobDialog from "./_components/DeleteJobDialog";
-import { getServerSideUser } from "@/lib/firebase-admin";
 import type { Job } from "@/lib/types";
 
-export default async function AdminJobsPage() {
+// Define AppUser type for the props
+type AppUser = {
+  uid: string;
+  email?: string;
+  name?: string | null;
+  avatar?: string;
+  role?: string;
+};
+
+interface AdminJobsPageProps {
+  user?: AppUser; // User is passed from layout
+}
+
+export default async function AdminJobsPage({ user }: AdminJobsPageProps) {
   const allJobs = await getJobs();
-  const user = await getServerSideUser();
-  const appUser = user ? await getUserById(user.uid) : null;
   
+  // The user object is now passed as a prop from the layout
+  const appUser = user;
+
   const jobsToDisplay = appUser?.role === 'admin' 
     ? allJobs
-    : allJobs.filter(job => job.user_id === user?.uid);
+    // If not admin, only show jobs created by this user
+    : allJobs.filter(job => job.user_id === appUser?.uid);
 
-  const canEditOrDelete = (job: Job) => {
+  // Helper to determine if the current user can edit/delete/view applicants
+  const canManageJob = (job: Job) => {
     if (!appUser) return false;
+    // Admin can manage any job
     if (appUser.role === 'admin') return true;
+    // Non-admin users can only manage their own jobs
     return job.user_id === appUser.uid;
   }
 
@@ -68,7 +86,7 @@ export default async function AdminJobsPage() {
                   </TableCell>
                   <TableCell className="hidden sm:table-cell">{job.location}</TableCell>
                    <TableCell className="text-center">
-                    {canEditOrDelete(job) ? (
+                    {canManageJob(job) ? (
                         <Button variant="ghost" size="sm" asChild>
                             <Link href={`/admin/jobs/${job.id}/applicants`}>
                                 <Badge variant="secondary" className="cursor-pointer hover:bg-primary/20">
@@ -85,7 +103,7 @@ export default async function AdminJobsPage() {
                   <TableCell>
                     <DropdownMenu>
                       <DropdownMenuTrigger asChild>
-                        <Button aria-haspopup="true" size="icon" variant="ghost" disabled={!canEditOrDelete(job)}>
+                        <Button aria-haspopup="true" size="icon" variant="ghost" disabled={!canManageJob(job)}>
                           <MoreHorizontal className="h-4 w-4" />
                           <span className="sr-only">Toggle menu</span>
                         </Button>
@@ -94,12 +112,12 @@ export default async function AdminJobsPage() {
                         <DropdownMenuLabel>Hành động</DropdownMenuLabel>
                          <DropdownMenuItem asChild>
                            <Link href={`/admin/jobs/${job.id}/applicants`} className="flex items-center gap-2 cursor-pointer">
-                            <Users /> Xem ứng viên
+                            <Users className="w-4 h-4" /> Xem ứng viên
                            </Link>
                         </DropdownMenuItem>
                         <DropdownMenuItem asChild>
                           <Link href={`/admin/jobs/${job.id}/edit`} className="flex items-center gap-2 cursor-pointer">
-                            <Pencil /> Sửa
+                            <Pencil className="w-4 h-4" /> Sửa
                           </Link>
                         </DropdownMenuItem>
                         <DropdownMenuSeparator />
