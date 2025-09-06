@@ -28,6 +28,17 @@ export interface Job {
   companyLogoUrl: string;
   companyLogoHint: string;
   created_at: string;
+  application_count?: number;
+}
+
+export interface Application {
+    id: number;
+    job_id: number;
+    name: string;
+    email: string;
+    phone: string | null;
+    cv_url: string;
+    created_at: string;
 }
 
 export const postFormSchema = z.object({

@@ -1,6 +1,6 @@
 'use server';
 
-import type { BlogPost, Job, PostFormData, JobFormData, ApplicationFormData } from '@/lib/types';
+import type { BlogPost, Job, PostFormData, JobFormData, ApplicationFormData, Application } from '@/lib/types';
 import mysql from 'mysql2/promise';
 import fs from 'node:fs/promises';
 import path from 'node:path';
@@ -213,7 +213,14 @@ export async function getJobs(): Promise<Job[]> {
     let connection;
     try {
         connection = await mysql.createConnection(dbConfig);
-        const [rows] = await connection.execute<mysql.RowDataPacket[]>('SELECT * FROM jobs ORDER BY created_at DESC');
+        const sql = `
+            SELECT j.*, COUNT(a.id) as application_count
+            FROM jobs j
+            LEFT JOIN applications a ON j.id = a.job_id
+            GROUP BY j.id
+            ORDER BY j.created_at DESC
+        `;
+        const [rows] = await connection.execute<mysql.RowDataPacket[]>(sql);
         return rows as Job[];
     } catch (error) {
         console.error('Failed to fetch jobs:', error);
@@ -315,6 +322,23 @@ export async function deleteJob(id: number) {
 }
 
 // Application Actions
+export async function getApplicationsByJobId(jobId: number): Promise<Application[]> {
+    let connection;
+    try {
+        connection = await mysql.createConnection(dbConfig);
+        const [rows] = await connection.execute<mysql.RowDataPacket[]>('SELECT * FROM applications WHERE job_id = ? ORDER BY created_at DESC', [jobId]);
+        return rows as Application[];
+    } catch (error) {
+        console.error('Failed to fetch applications:', error);
+        return [];
+    } finally {
+        if (connection) {
+            await connection.end();
+        }
+    }
+}
+
+
 export async function createApplication(data: ApplicationFormData) {
     let connection;
     try {
