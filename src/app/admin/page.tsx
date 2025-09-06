@@ -1,8 +1,12 @@
 import { Card, CardHeader, CardTitle, CardContent } from "@/components/ui/card";
 import { BookText, Briefcase } from "lucide-react";
 import Link from "next/link";
+import { getPosts, getJobs } from "@/app/actions";
 
-export default function AdminDashboardPage() {
+export default async function AdminDashboardPage() {
+  const posts = await getPosts();
+  const jobs = await getJobs();
+
   return (
     <div>
       <h1 className="text-3xl font-bold mb-6">Chào mừng đến trang Quản trị</h1>
@@ -14,7 +18,7 @@ export default function AdminDashboardPage() {
               <BookText className="h-4 w-4 text-muted-foreground" />
             </CardHeader>
             <CardContent>
-              <div className="text-2xl font-bold">10</div>
+              <div className="text-2xl font-bold">{posts.length}</div>
               <p className="text-xs text-muted-foreground">Tổng số bài viết</p>
             </CardContent>
           </Card>
@@ -26,7 +30,7 @@ export default function AdminDashboardPage() {
               <Briefcase className="h-4 w-4 text-muted-foreground" />
             </CardHeader>
             <CardContent>
-              <div className="text-2xl font-bold">5</div>
+              <div className="text-2xl font-bold">{jobs.length}</div>
               <p className="text-xs text-muted-foreground">Tổng số việc làm</p>
             </CardContent>
           </Card>
