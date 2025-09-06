@@ -68,9 +68,11 @@ export default async function JobDetailPage({ params }: { params: { id: string }
                     </div>
                 </CardHeader>
                 <CardContent>
-                    <div className="prose max-w-none text-foreground dark:prose-invert prose-headings:text-primary prose-a:text-accent">
-                        <h2 className="text-xl font-bold">Mô tả công việc</h2>
-                        <p>{job.description}</p>
+                    <div className="space-y-4">
+                        <h2 className="text-xl font-bold text-primary">Mô tả công việc</h2>
+                        <div className="text-foreground whitespace-pre-line">
+                            {job.description}
+                        </div>
                     </div>
                 </CardContent>
             </Card>
