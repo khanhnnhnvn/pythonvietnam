@@ -3,7 +3,7 @@
 import { useState, useEffect } from "react";
 import { GoogleAuthProvider, signInWithPopup, onAuthStateChanged, User, signOut } from "firebase/auth";
 import { auth } from "@/lib/firebase";
-import { saveUser } from "@/app/actions";
+import { saveUser, getUserById } from "@/app/actions";
 import { Button } from "@/components/ui/button";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import {
@@ -17,35 +17,57 @@ import {
 import { LogIn, LogOut, LoaderCircle } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 
-export default function AuthButton() {
-  const [user, setUser] = useState<User | null>(null);
+type AppUser = {
+  uid: string;
+  email?: string;
+  name?: string | null;
+  avatar?: string;
+  role?: string;
+};
+
+interface AuthButtonProps {
+    user?: AppUser | null;
+}
+
+export default function AuthButton({ user: initialUser }: AuthButtonProps) {
+  const [user, setUser] = useState<AppUser | null | undefined>(initialUser);
   const [isLoading, setIsLoading] = useState(true);
   const { toast } = useToast();
 
   useEffect(() => {
-    const unsubscribe = onAuthStateChanged(auth, async (user) => {
+    const unsubscribe = onAuthStateChanged(auth, async (firebaseUser: User | null) => {
       setIsLoading(true);
-      if (user) {
+      if (firebaseUser) {
         const result = await saveUser({
-            uid: user.uid,
-            email: user.email ?? undefined,
-            name: user.displayName,
-            avatar: user.photoURL ?? undefined,
+            uid: firebaseUser.uid,
+            email: firebaseUser.email ?? undefined,
+            name: firebaseUser.displayName,
+            avatar: firebaseUser.photoURL ?? undefined,
         });
 
-        if (!result.success) {
+        if (result.success) {
+            const appUser = await getUserById(firebaseUser.uid);
+            setUser(appUser);
+        } else {
             toast({
                 variant: "destructive",
                 title: "Lỗi lưu dữ liệu",
-                description: result.error,
+                description: `Không thể lưu thông tin người dùng. Lỗi: ${result.error}`,
             });
+            setUser(null); // Clear user if save fails
         }
+      } else {
+        setUser(null);
       }
-      setUser(user);
       setIsLoading(false);
     });
     return () => unsubscribe();
   }, [toast]);
+  
+   useEffect(() => {
+    setUser(initialUser);
+  }, [initialUser]);
+
 
   const handleSignIn = async () => {
     setIsLoading(true);
@@ -102,15 +124,15 @@ export default function AuthButton() {
       <DropdownMenuTrigger asChild>
         <Button variant="ghost" className="relative h-10 w-10 rounded-full">
             <Avatar className="h-9 w-9">
-                <AvatarImage src={user.photoURL ?? undefined} alt={user.displayName ?? "User"} />
-                <AvatarFallback>{user.displayName?.charAt(0).toUpperCase()}</AvatarFallback>
+                <AvatarImage src={user.avatar ?? undefined} alt={user.name ?? "User"} />
+                <AvatarFallback>{user.name?.charAt(0).toUpperCase()}</AvatarFallback>
             </Avatar>
         </Button>
       </DropdownMenuTrigger>
       <DropdownMenuContent align="end" className="w-56">
         <DropdownMenuLabel>
           <div className="flex flex-col space-y-1">
-            <p className="text-sm font-medium leading-none">{user.displayName}</p>
+            <p className="text-sm font-medium leading-none">{user.name}</p>
             <p className="text-xs leading-none text-muted-foreground">{user.email}</p>
           </div>
         </DropdownMenuLabel>

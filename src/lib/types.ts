@@ -31,12 +31,12 @@ export interface Job {
 export const postFormSchema = z.object({
   title: z.string().min(5, { message: "Tiêu đề phải có ít nhất 5 ký tự." }),
   slug: z.string().min(5, { message: "Slug phải có ít nhất 5 ký tự." }).regex(/^[a-z0-9-]+$/, { message: "Slug chỉ được chứa chữ thường, số và dấu gạch ngang." }),
-  author: z.string().min(2, { message: "Tên tác giả phải có ít nhất 2 ký tự." }),
-  category: z.string().min(1, { message: "Vui lòng chọn danh mục." }),
+  author: z.string().min(1, { message: "Tên tác giả là bắt buộc." }),
+  category: z.string().min(1, { message: "Vui lòng nhập danh mục." }),
   description: z.string().min(10, { message: "Mô tả phải có ít nhất 10 ký tự." }),
   content: z.string().min(50, { message: "Nội dung phải có ít nhất 50 ký tự." }),
-  imageUrl: z.string().url({ message: "URL hình ảnh không hợp lệ." }),
-  imageHint: z.string().max(40, { message: "Gợi ý ảnh không được quá 40 ký tự."}),
+  imageUrl: z.string().url({ message: "URL hình ảnh không hợp lệ." }).min(1, { message: "Vui lòng tải lên một hình ảnh." }),
+  imageHint: z.string().max(40, { message: "Gợi ý ảnh không được quá 40 ký tự."}).optional(),
 });
 
 export type PostFormData = z.infer<typeof postFormSchema>;

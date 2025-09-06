@@ -86,10 +86,10 @@ export default function Header() {
           <NavLink href="/admin" label="Quản trị" icon={Shield} isAdminLink />
         </nav>
         <div className="ml-auto hidden items-center gap-2 md:flex">
-          <AuthButton />
+          <AuthButton user={currentUser}/>
         </div>
         <div className="flex flex-1 items-center justify-end md:hidden">
-           <AuthButton />
+           <AuthButton user={currentUser}/>
           <Sheet open={isMobileMenuOpen} onOpenChange={setIsMobileMenuOpen}>
             <SheetTrigger asChild>
               <Button variant="ghost" size="icon">

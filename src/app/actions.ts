@@ -2,6 +2,8 @@
 
 import type { BlogPost, Job, PostFormData } from '@/lib/types';
 import mysql from 'mysql2/promise';
+import fs from 'node:fs/promises';
+import path from 'node:path';
 
 type UserData = {
   uid: string;
@@ -173,6 +175,41 @@ export async function deletePost(id: number) {
         }
     }
 }
+
+
+export async function uploadFile(formData: FormData) {
+  const file = formData.get('file') as File;
+
+  if (!file) {
+    return { success: false, error: 'No file provided.' };
+  }
+  if (file.size === 0) {
+    return { success: false, error: 'File is empty.' };
+  }
+
+  try {
+    const buffer = Buffer.from(await file.arrayBuffer());
+    const uploadDir = path.join(process.cwd(), 'public/uploads');
+    
+    // Ensure the uploads directory exists
+    await fs.mkdir(uploadDir, { recursive: true });
+
+    // Create a unique filename
+    const filename = `${Date.now()}-${file.name.replace(/\s/g, '_')}`;
+    const filePath = path.join(uploadDir, filename);
+
+    // Write the file to the server
+    await fs.writeFile(filePath, buffer);
+
+    const fileUrl = `/uploads/${filename}`;
+    
+    return { success: true, url: fileUrl };
+  } catch (error: any) {
+    console.error('File upload failed:', error);
+    return { success: false, error: `File upload failed: ${error.message}` };
+  }
+}
+
 
 // Job Actions (Placeholder)
 export async function getJobs(): Promise<Job[]> {

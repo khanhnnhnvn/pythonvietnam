@@ -3,28 +3,31 @@
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { useRouter } from "next/navigation";
-import { useState } from "react";
+import { useState, useEffect, useRef } from "react";
+import Image from "next/image";
 import { postFormSchema, type PostFormData, type BlogPost } from "@/lib/types";
-import { blogCategories } from "@/lib/data";
 import { useToast } from "@/hooks/use-toast";
-import { createPost, updatePost } from "@/app/actions";
+import { createPost, updatePost, uploadFile } from "@/app/actions";
+import { generateSlug } from "@/lib/utils";
 
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage, FormDescription } from "@/components/ui/form";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { LoaderCircle } from "lucide-react";
+import { LoaderCircle, Upload } from "lucide-react";
 
 interface PostFormProps {
   post?: BlogPost | null;
+  authorName?: string | null;
 }
 
-export default function PostForm({ post }: PostFormProps) {
+export default function PostForm({ post, authorName }: PostFormProps) {
   const router = useRouter();
   const { toast } = useToast();
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const [isUploading, setIsUploading] = useState(false);
+  const fileInputRef = useRef<HTMLInputElement>(null);
   const isEditMode = !!post;
 
   const form = useForm<PostFormData>({
@@ -32,7 +35,7 @@ export default function PostForm({ post }: PostFormProps) {
     defaultValues: {
       title: post?.title ?? "",
       slug: post?.slug ?? "",
-      author: post?.author ?? "",
+      author: post?.author ?? authorName ?? "",
       category: post?.category ?? "",
       description: post?.description ?? "",
       content: post?.content ?? "",
@@ -41,10 +44,56 @@ export default function PostForm({ post }: PostFormProps) {
     },
   });
 
+  const titleValue = form.watch("title");
+  const imageUrlValue = form.watch("imageUrl");
+
+  useEffect(() => {
+    if (!isEditMode && titleValue) {
+      const slug = generateSlug(titleValue);
+      form.setValue("slug", slug, { shouldValidate: true });
+    }
+  }, [titleValue, isEditMode, form]);
+
+  useEffect(() => {
+    if (authorName) {
+      form.setValue("author", authorName);
+    }
+  }, [authorName, form]);
+
+  const handleFileChange = async (event: React.ChangeEvent<HTMLInputElement>) => {
+    const file = event.target.files?.[0];
+    if (!file) return;
+
+    setIsUploading(true);
+    const formData = new FormData();
+    formData.append('file', file);
+
+    try {
+      const result = await uploadFile(formData);
+      if (result.success && result.url) {
+        form.setValue('imageUrl', result.url, { shouldValidate: true });
+        toast({
+          title: "Thành công!",
+          description: "Đã tải ảnh lên thành công.",
+        });
+      } else {
+        throw new Error(result.error || 'Lỗi không xác định khi tải ảnh lên.');
+      }
+    } catch (error: any) {
+      toast({
+        variant: "destructive",
+        title: "Tải ảnh lên thất bại",
+        description: error.message,
+      });
+    } finally {
+      setIsUploading(false);
+    }
+  };
+
   async function onSubmit(data: PostFormData) {
     setIsSubmitting(true);
     try {
-      const result = isEditMode 
+      const result = isEditMode
         ? await updatePost(post.id, data)
         : await createPost(data);
 
@@ -78,70 +127,85 @@ export default function PostForm({ post }: PostFormProps) {
       <CardContent>
         <Form {...form}>
           <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-8">
+            <FormField
+              control={form.control}
+              name="title"
+              render={({ field }) => (
+                <FormItem>
+                  <FormLabel>Tiêu đề</FormLabel>
+                  <FormControl>
+                    <Input placeholder="Tiêu đề bài viết" {...field} />
+                  </FormControl>
+                  <FormMessage />
+                </FormItem>
+              )}
+            />
+
+            {/* Hidden fields for slug and author */}
+            <FormField control={form.control} name="slug" render={({ field }) => <Input type="hidden" {...field} />} />
+            <FormField control={form.control} name="author" render={({ field }) => <Input type="hidden" {...field} />} />
+
             <div className="grid grid-cols-1 gap-6 md:grid-cols-2">
-              <FormField
-                control={form.control}
-                name="title"
-                render={({ field }) => (
-                  <FormItem>
-                    <FormLabel>Tiêu đề</FormLabel>
-                    <FormControl>
-                      <Input placeholder="Tiêu đề bài viết" {...field} />
-                    </FormControl>
-                    <FormMessage />
-                  </FormItem>
-                )}
-              />
-              <FormField
-                control={form.control}
-                name="slug"
-                render={({ field }) => (
-                  <FormItem>
-                    <FormLabel>Slug</FormLabel>
-                    <FormControl>
-                      <Input placeholder="vi-du-slug-bai-viet" {...field} />
-                    </FormControl>
-                    <FormDescription>Đây là URL của bài viết.</FormDescription>
-                    <FormMessage />
-                  </FormItem>
-                )}
-              />
-              <FormField
-                control={form.control}
-                name="author"
-                render={({ field }) => (
-                  <FormItem>
-                    <FormLabel>Tác giả</FormLabel>
-                    <FormControl>
-                      <Input placeholder="Tên tác giả" {...field} />
-                    </FormControl>
-                    <FormMessage />
-                  </FormItem>
-                )}
-              />
               <FormField
                 control={form.control}
                 name="category"
                 render={({ field }) => (
                   <FormItem>
                     <FormLabel>Danh mục</FormLabel>
-                    <Select onValueChange={field.onChange} defaultValue={field.value}>
-                      <FormControl>
-                        <SelectTrigger>
-                          <SelectValue placeholder="Chọn một danh mục" />
-                        </SelectTrigger>
-                      </FormControl>
-                      <SelectContent>
-                        {blogCategories.map((cat) => (
-                          <SelectItem key={cat} value={cat}>{cat}</SelectItem>
-                        ))}
-                      </SelectContent>
-                    </Select>
+                    <FormControl>
+                      <Input placeholder="Ví dụ: Web Development" {...field} />
+                    </FormControl>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
+              <FormField
+                control={form.control}
+                name="imageHint"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel>Gợi ý tìm ảnh (AI Hint)</FormLabel>
+                    <FormControl>
+                      <Input placeholder="Ví dụ: code editor" {...field} />
+                    </FormControl>
+                     <FormDescription>Mô tả ngắn gọn về ảnh để AI nhận diện (tối đa 2 từ).</FormDescription>
                     <FormMessage />
                   </FormItem>
                 )}
               />
             </div>
+            
+             <FormField
+              control={form.control}
+              name="imageUrl"
+              render={() => (
+                <FormItem>
+                  <FormLabel>Hình ảnh đại diện</FormLabel>
+                   <FormControl>
+                    <Input type="file" accept="image/*" ref={fileInputRef} onChange={handleFileChange} className="hidden" disabled={isUploading} />
+                  </FormControl>
+                  <div className="flex items-center gap-4">
+                     <Button
+                      type="button"
+                      variant="outline"
+                      onClick={() => fileInputRef.current?.click()}
+                      disabled={isUploading}
+                    >
+                      {isUploading ? <LoaderCircle className="mr-2 h-4 w-4 animate-spin" /> : <Upload className="mr-2 h-4 w-4" />}
+                      {isUploading ? "Đang tải lên..." : "Tải ảnh lên"}
+                    </Button>
+                    {imageUrlValue && (
+                        <div className="relative h-20 w-32 rounded-md border">
+                            <Image src={imageUrlValue} alt="Preview" fill className="rounded-md object-cover"/>
+                        </div>
+                    )}
+                  </div>
+                  <FormDescription>URL ảnh sẽ được tự động cập nhật sau khi tải lên.</FormDescription>
+                  <FormMessage />
+                </FormItem>
+              )}
+            />
+
 
             <FormField
               control={form.control}
@@ -172,41 +236,12 @@ export default function PostForm({ post }: PostFormProps) {
               )}
             />
 
-            <div className="grid grid-cols-1 gap-6 md:grid-cols-2">
-               <FormField
-                control={form.control}
-                name="imageUrl"
-                render={({ field }) => (
-                  <FormItem>
-                    <FormLabel>URL Hình ảnh</FormLabel>
-                    <FormControl>
-                      <Input placeholder="https://..." {...field} />
-                    </FormControl>
-                    <FormMessage />
-                  </FormItem>
-                )}
-              />
-               <FormField
-                control={form.control}
-                name="imageHint"
-                render={({ field }) => (
-                  <FormItem>
-                    <FormLabel>Gợi ý tìm ảnh (AI Hint)</FormLabel>
-                    <FormControl>
-                      <Input placeholder="Ví dụ: code editor" {...field} />
-                    </FormControl>
-                    <FormMessage />
-                  </FormItem>
-                )}
-              />
-            </div>
-            
             <div className="flex justify-end gap-4">
-                <Button type="button" variant="outline" onClick={() => router.back()}>Hủy</Button>
-                <Button type="submit" disabled={isSubmitting}>
-                    {isSubmitting && <LoaderCircle className="mr-2 h-4 w-4 animate-spin" />}
-                    {isEditMode ? "Lưu thay đổi" : "Tạo bài viết"}
-                </Button>
+              <Button type="button" variant="outline" onClick={() => router.back()}>Hủy</Button>
+              <Button type="submit" disabled={isSubmitting || isUploading}>
+                {(isSubmitting || isUploading) && <LoaderCircle className="mr-2 h-4 w-4 animate-spin" />}
+                {isEditMode ? "Lưu thay đổi" : "Tạo bài viết"}
+              </Button>
             </div>
           </form>
         </Form>
