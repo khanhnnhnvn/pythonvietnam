@@ -3,15 +3,15 @@ import Link from "next/link";
 import { ArrowRight, Briefcase, BookOpen } from "lucide-react";
 
 import { Button } from "@/components/ui/button";
-import { jobs } from "@/lib/data";
 import BlogPostCard from "@/components/blog/BlogPostCard";
 import JobCard from "@/components/jobs/JobCard";
-import { getPosts } from "./actions";
+import { getPosts, getJobs } from "./actions";
 
 export default async function Home() {
   const allPosts = await getPosts();
+  const allJobs = await getJobs();
   const latestPosts = allPosts.slice(0, 3);
-  const featuredJobs = jobs.slice(0, 2);
+  const featuredJobs = allJobs.slice(0, 2);
 
   return (
     <div className="flex flex-col">

@@ -1,25 +1,27 @@
-import { jobs } from "@/lib/data";
 import JobCard from "@/components/jobs/JobCard";
 import JobSearchFilters from "@/components/jobs/JobSearchFilters";
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 import { FileSearch } from "lucide-react";
 import type { Job } from "@/lib/types";
+import { getJobs } from "../actions";
 
 export const metadata = {
   title: "Việc làm | Python Vietnam",
   description: "Tìm kiếm cơ hội việc làm trong ngành Python tại Việt Nam.",
 };
 
-export default function JobsPage({
+export default async function JobsPage({
   searchParams,
 }: {
   searchParams: { [key: string]: string | string[] | undefined };
 }) {
+  const allJobs = await getJobs();
+
   const query = searchParams.q as string | undefined;
   const location = searchParams.location as string | undefined;
   const category = searchParams.category as Job["category"] | undefined;
 
-  const filteredJobs = jobs.filter((job) => {
+  const filteredJobs = allJobs.filter((job) => {
     const queryMatch =
       !query ||
       job.title.toLowerCase().includes(query.toLowerCase()) ||
@@ -36,7 +38,7 @@ export default function JobsPage({
       <div className="mb-8 space-y-2">
         <h1 className="text-3xl font-bold tracking-tighter sm:text-4xl">Tìm kiếm Việc làm</h1>
         <p className="text-muted-foreground">
-          Khám phá {jobs.length} cơ hội việc làm đang chờ bạn.
+          Khám phá {allJobs.length} cơ hội việc làm đang chờ bạn.
         </p>
       </div>
       <JobSearchFilters />

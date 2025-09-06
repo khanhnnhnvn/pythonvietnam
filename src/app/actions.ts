@@ -1,6 +1,6 @@
 'use server';
 
-import type { BlogPost, Job, PostFormData } from '@/lib/types';
+import type { BlogPost, Job, PostFormData, JobFormData } from '@/lib/types';
 import mysql from 'mysql2/promise';
 import fs from 'node:fs/promises';
 import path from 'node:path';
@@ -211,7 +211,92 @@ export async function uploadFile(formData: FormData) {
 }
 
 
-// Job Actions (Placeholder)
+// Job Actions
 export async function getJobs(): Promise<Job[]> {
-    return []; // Replace with DB query
+    let connection;
+    try {
+        connection = await mysql.createConnection(dbConfig);
+        const [rows] = await connection.execute<mysql.RowDataPacket[]>('SELECT * FROM jobs ORDER BY created_at DESC');
+        return rows as Job[];
+    } catch (error) {
+        console.error('Failed to fetch jobs:', error);
+        return [];
+    } finally {
+        if (connection) {
+            await connection.end();
+        }
+    }
+}
+
+
+export async function getJobById(id: number): Promise<Job | null> {
+    let connection;
+    try {
+        connection = await mysql.createConnection(dbConfig);
+        const [rows] = await connection.execute<mysql.RowDataPacket[]>('SELECT * FROM jobs WHERE id = ?', [id]);
+        return rows.length > 0 ? rows[0] as Job : null;
+    } catch (error) {
+        console.error(`Failed to fetch job with id ${id}:`, error);
+        return null;
+    } finally {
+        if (connection) {
+            await connection.end();
+        }
+    }
+}
+
+export async function createJob(data: JobFormData) {
+    let connection;
+    try {
+        connection = await mysql.createConnection(dbConfig);
+        const sql = `
+            INSERT INTO jobs (title, company, location, type, category, description, companyLogoUrl, companyLogoHint)
+            VALUES (?, ?, ?, ?, ?, ?, ?, ?);
+        `;
+        await connection.execute(sql, [data.title, data.company, data.location, data.type, data.category, data.description, data.companyLogoUrl, data.companyLogoHint]);
+        return { success: true };
+    } catch (error: any) {
+        console.error('Failed to create job:', error);
+        return { success: false, error: `Database Error: ${error.message}` };
+    } finally {
+        if (connection) {
+            await connection.end();
+        }
+    }
+}
+
+export async function updateJob(id: number, data: JobFormData) {
+    let connection;
+    try {
+        connection = await mysql.createConnection(dbConfig);
+        const sql = `
+            UPDATE jobs SET title = ?, company = ?, location = ?, type = ?, category = ?, description = ?, companyLogoUrl = ?, companyLogoHint = ?
+            WHERE id = ?;
+        `;
+        await connection.execute(sql, [data.title, data.company, data.location, data.type, data.category, data.description, data.companyLogoUrl, data.companyLogoHint, id]);
+        return { success: true };
+    } catch (error: any) {
+        console.error('Failed to update job:', error);
+        return { success: false, error: `Database Error: ${error.message}` };
+    } finally {
+        if (connection) {
+            await connection.end();
+        }
+    }
+}
+
+export async function deleteJob(id: number) {
+    let connection;
+    try {
+        connection = await mysql.createConnection(dbConfig);
+        await connection.execute('DELETE FROM jobs WHERE id = ?', [id]);
+        return { success: true };
+    } catch (error: any) {
+        console.error('Failed to delete job:', error);
+        return { success: false, error: `Database Error: ${error.message}` };
+    } finally {
+        if (connection) {
+            await connection.end();
+        }
+    }
 }
