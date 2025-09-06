@@ -22,6 +22,12 @@ const nextConfig: NextConfig = {
         port: '',
         pathname: '/**',
       },
+      {
+        protocol: 'https',
+        hostname: 'khanhnn.com',
+        port: '',
+        pathname: '/**',
+      },
     ],
   },
   // The value below is a workaround for development given that the
