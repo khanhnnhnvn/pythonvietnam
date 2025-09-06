@@ -27,18 +27,26 @@ export default function AuthButton() {
       if (user) {
         // Lưu người dùng vào DB mỗi khi trạng thái thay đổi (ví dụ: tải lại trang)
         // để cập nhật last_login_at
-        await saveUser({
+        const result = await saveUser({
             uid: user.uid,
             email: user.email ?? undefined,
             name: user.displayName,
             avatar: user.photoURL ?? undefined,
         });
+
+        if (!result.success) {
+            toast({
+                variant: "destructive",
+                title: "Lỗi lưu dữ liệu",
+                description: result.error,
+            });
+        }
       }
       setUser(user);
       setIsLoading(false);
     });
     return () => unsubscribe();
-  }, []);
+  }, [toast]);
 
   const handleSignIn = async () => {
     setIsLoading(true);
