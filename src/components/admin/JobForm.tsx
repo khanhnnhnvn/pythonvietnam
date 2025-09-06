@@ -20,11 +20,11 @@ import {
   FormDescription,
 } from "@/components/ui/form";
 import { Input } from "@/components/ui/input";
-import { Textarea } from "@/components/ui/textarea";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { LoaderCircle } from "lucide-react";
 import Image from "next/image";
 import { useAuth } from "@/hooks/useAuth";
+import RichTextEditor from "../common/RichTextEditor";
 
 interface JobFormProps {
   job?: Job;
@@ -227,7 +227,7 @@ export default function JobForm({ job }: JobFormProps) {
             <FormItem>
               <FormLabel>Mô tả công việc</FormLabel>
               <FormControl>
-                <Textarea className="min-h-[250px]" placeholder="Mô tả chi tiết về công việc..." {...field} />
+                 <RichTextEditor {...field} />
               </FormControl>
               <FormMessage />
             </FormItem>
