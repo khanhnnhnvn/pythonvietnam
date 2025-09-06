@@ -1,9 +1,17 @@
+"use client";
 
-import { Card, CardHeader, CardTitle, CardContent } from "@/components/ui/card";
-import { BookText, Briefcase } from "lucide-react";
 import Link from "next/link";
-import { getPosts, getJobs } from "@/app/actions";
-import { redirect } from "next/navigation";
+import { usePathname } from "next/navigation";
+import { Code2, BookOpen, Briefcase, Menu, UserCog } from "lucide-react";
+import { useState, useEffect } from "react";
+import { onAuthStateChanged, User } from "firebase/auth";
+import { auth } from "@/lib/firebase";
+import { getUserById } from "@/app/actions";
+
+import { Button } from "@/components/ui/button";
+import { Sheet, SheetContent, SheetTrigger } from "@/components/ui/sheet";
+import { cn } from "@/lib/utils";
+import AuthButton from "../auth/AuthButton";
 
 type AppUser = {
   uid: string;
@@ -13,35 +21,96 @@ type AppUser = {
   role?: string;
 };
 
-interface AdminDashboardPageProps {
-  user?: AppUser;
-}
 
-export default async function AdminDashboardPage({ user }: AdminDashboardPageProps) {
-  // If user is not admin, redirect them to the jobs page.
-  if (user?.role !== 'admin') {
-    redirect('/');
+const navLinks = [
+  { href: "/blog", label: "Bài viết", icon: BookOpen },
+  { href: "/jobs", label: "Việc làm", icon: Briefcase },
+];
+
+export default function Header() {
+  const pathname = usePathname();
+  const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
+  const [currentUser, setCurrentUser] = useState<AppUser | null>(null);
+
+  useEffect(() => {
+    const unsubscribe = onAuthStateChanged(auth, async (user) => {
+      if (user) {
+        const appUser = await getUserById(user.uid);
+        setCurrentUser(appUser);
+      } else {
+        setCurrentUser(null);
+      }
+    });
+    return () => unsubscribe();
+  }, []);
+
+
+  const NavLink = ({ href, label, icon: Icon }: typeof navLinks[0]) => {
+    return (
+      <Link
+        href={href}
+        className={cn(
+          "flex items-center gap-2 rounded-md px-3 py-2 text-sm font-medium transition-colors",
+          pathname.startsWith(href)
+            ? "bg-primary/10 text-primary"
+            : "text-foreground/70 hover:bg-foreground/5 hover:text-foreground"
+        )}
+        onClick={() => setIsMobileMenuOpen(false)}
+      >
+        <Icon className="h-4 w-4" />
+        {label}
+      </Link>
+    );
   }
 
-  const posts = await getPosts();
-
   return (
-    <div>
-      <h1 className="text-3xl font-bold mb-6">Chào mừng đến trang Quản trị</h1>
-      <div className="grid gap-6 md:grid-cols-2">
-        <Link href="/admin/posts">
-          <Card className="hover:bg-muted/50 transition-colors">
-            <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-              <CardTitle className="text-sm font-medium">Quản lý Bài viết</CardTitle>
-              <BookText className="h-4 w-4 text-muted-foreground" />
-            </CardHeader>
-            <CardContent>
-              <div className="text-2xl font-bold">{posts.length}</div>
-              <p className="text-xs text-muted-foreground">Tổng số bài viết</p>
-            </CardContent>
-          </Card>
+    <header className="sticky top-0 z-50 w-full border-b bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60">
+      <div className="container flex h-14 items-center">
+        <Link
+          href="/"
+          className="mr-6 flex items-center gap-2"
+          onClick={() => setIsMobileMenuOpen(false)}
+        >
+          <Code2 className="h-6 w-6 text-primary" />
+          <span className="font-bold text-foreground">Python Vietnam</span>
         </Link>
+        <nav className="hidden items-center gap-2 md:flex">
+          {navLinks.map((link) => (
+            <NavLink key={link.href} {...link} />
+          ))}
+        </nav>
+        <div className="ml-auto hidden items-center gap-2 md:flex">
+          <AuthButton user={currentUser}/>
+        </div>
+        <div className="flex flex-1 items-center justify-end md:hidden">
+           <AuthButton user={currentUser}/>
+          <Sheet open={isMobileMenuOpen} onOpenChange={setIsMobileMenuOpen}>
+            <SheetTrigger asChild>
+              <Button variant="ghost" size="icon">
+                <Menu className="h-5 w-5" />
+                <span className="sr-only">Mở menu</span>
+              </Button>
+            </SheetTrigger>
+            <SheetContent side="left">
+              <div className="flex h-full flex-col p-4">
+                <Link
+                  href="/"
+                  className="mb-8 flex items-center gap-2"
+                  onClick={() => setIsMobileMenuOpen(false)}
+                >
+                  <Code2 className="h-6 w-6 text-primary" />
+                  <span className="font-bold text-foreground">Python Vietnam</span>
+                </Link>
+                <nav className="flex flex-col gap-2">
+                  {navLinks.map((link) => (
+                    <NavLink key={link.href} {...link} />
+                  ))}
+                </nav>
+              </div>
+            </SheetContent>
+          </Sheet>
+        </div>
       </div>
-    </div>
+    </header>
   );
 }

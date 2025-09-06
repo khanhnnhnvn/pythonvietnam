@@ -1,304 +1,116 @@
-
 "use client";
 
-import { useForm } from "react-hook-form";
-import { zodResolver } from "@hookform/resolvers/zod";
-import { useRouter } from "next/navigation";
-import { useState, useRef, useEffect } from "react";
-import Image from "next/image";
-import { jobFormSchema, type JobFormData, type Job } from "@/lib/types";
-import { useToast } from "@/hooks/use-toast";
-import { createJob, updateJob, uploadFile } from "@/app/actions";
-import { generateSlug } from "@/lib/utils";
+import Link from "next/link";
+import { usePathname } from "next/navigation";
+import { Code2, BookOpen, Briefcase, Menu, UserCog } from "lucide-react";
+import { useState, useEffect } from "react";
+import { onAuthStateChanged, User } from "firebase/auth";
+import { auth } from "@/lib/firebase";
+import { getUserById } from "@/app/actions";
 
 import { Button } from "@/components/ui/button";
-import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
-import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage, FormDescription } from "@/components/ui/form";
-import { Input } from "@/components/ui/input";
-import { Textarea } from "@/components/ui/textarea";
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { LoaderCircle, Upload } from "lucide-react";
+import { Sheet, SheetContent, SheetTrigger } from "@/components/ui/sheet";
+import { cn } from "@/lib/utils";
+import AuthButton from "../auth/AuthButton";
+
+type AppUser = {
+  uid: string;
+  email?: string;
+  name?: string | null;
+  avatar?: string;
+  role?: string;
+};
 
 
-interface JobFormProps {
-  job?: Job | null;
-  userId?: string;
-}
+const navLinks = [
+  { href: "/blog", label: "Bài viết", icon: BookOpen },
+  { href: "/jobs", label: "Việc làm", icon: Briefcase },
+];
 
-export default function JobForm({ job, userId }: JobFormProps) {
-  const router = useRouter();
-  const { toast } = useToast();
-  const [isSubmitting, setIsSubmitting] = useState(false);
-  const [isUploading, setIsUploading] = useState(false);
-  const fileInputRef = useRef<HTMLInputElement>(null);
-  const isEditMode = !!job;
-
-  const form = useForm<JobFormData>({
-    resolver: zodResolver(jobFormSchema),
-    defaultValues: {
-      title: job?.title ?? "",
-      slug: job?.slug ?? "",
-      company: job?.company ?? "",
-      location: job?.location ?? "",
-      type: job?.type ?? 'Toàn thời gian',
-      category: job?.category ?? "",
-      description: job?.description ?? "",
-      companyLogoUrl: job?.companyLogoUrl ?? "",
-      companyLogoHint: job?.companyLogoHint ?? "",
-      user_id: job?.user_id ?? userId ?? "",
-    },
-  });
-
-  const titleValue = form.watch("title");
-  const logoUrlValue = form.watch("companyLogoUrl");
+export default function Header() {
+  const pathname = usePathname();
+  const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
+  const [currentUser, setCurrentUser] = useState<AppUser | null>(null);
 
   useEffect(() => {
-    if (!isEditMode && titleValue) {
-      const slug = generateSlug(titleValue);
-      form.setValue("slug", slug, { shouldValidate: true });
-    }
-  }, [titleValue, isEditMode, form]);
-
-  useEffect(() => {
-    if (userId && !form.getValues('user_id')) {
-        form.setValue('user_id', userId);
-    }
-  }, [userId, form]);
-
-  const handleFileChange = async (event: React.ChangeEvent<HTMLInputElement>) => {
-    const file = event.target.files?.[0];
-    if (!file) return;
-
-    setIsUploading(true);
-    const formData = new FormData();
-    formData.append('file', file);
-
-    try {
-      const result = await uploadFile(formData);
-      if (result.success && result.url) {
-        form.setValue('companyLogoUrl', result.url, { shouldValidate: true });
-        toast({
-          title: "Thành công!",
-          description: "Đã tải logo lên thành công.",
-        });
+    const unsubscribe = onAuthStateChanged(auth, async (user) => {
+      if (user) {
+        const appUser = await getUserById(user.uid);
+        setCurrentUser(appUser);
       } else {
-        throw new Error(result.error || 'Lỗi không xác định khi tải logo lên.');
+        setCurrentUser(null);
       }
-    } catch (error: any) {
-      toast({
-        variant: "destructive",
-        title: "Tải logo lên thất bại",
-        description: error.message,
-      });
-    } finally {
-      setIsUploading(false);
-    }
-  };
+    });
+    return () => unsubscribe();
+  }, []);
 
-  async function onSubmit(data: JobFormData) {
-    if (!data.user_id) {
-        toast({
-            variant: "destructive",
-            title: "Lỗi",
-            description: "Không tìm thấy thông tin người dùng. Vui lòng đăng nhập lại.",
-        });
-        return;
-    }
-    setIsSubmitting(true);
-    try {
-      const result = isEditMode
-        ? await updateJob(job.id, data)
-        : await createJob(data);
 
-      if (result.success) {
-        toast({
-          title: "Thành công!",
-          description: `Đã ${isEditMode ? 'cập nhật' : 'tạo'} tin tuyển dụng thành công.`,
-        });
-        router.push("/admin/jobs");
-        router.refresh();
-      } else {
-        toast({
-            variant: "destructive",
-            title: "Đã có lỗi xảy ra",
-            description: result.error || "Thao tác thất bại. Vui lòng thử lại."
-        });
-      }
-    } catch (error: any) {
-      toast({
-        variant: "destructive",
-        title: "Đã có lỗi xảy ra",
-        description: error.message,
-      });
-    } finally {
-      setIsSubmitting(false);
-    }
+  const NavLink = ({ href, label, icon: Icon }: typeof navLinks[0]) => {
+    return (
+      <Link
+        href={href}
+        className={cn(
+          "flex items-center gap-2 rounded-md px-3 py-2 text-sm font-medium transition-colors",
+          pathname.startsWith(href)
+            ? "bg-primary/10 text-primary"
+            : "text-foreground/70 hover:bg-foreground/5 hover:text-foreground"
+        )}
+        onClick={() => setIsMobileMenuOpen(false)}
+      >
+        <Icon className="h-4 w-4" />
+        {label}
+      </Link>
+    );
   }
 
   return (
-    <Card>
-      <CardHeader>
-        <CardTitle>{isEditMode ? "Sửa tin tuyển dụng" : "Tạo tin tuyển dụng mới"}</CardTitle>
-        <CardDescription>Điền thông tin chi tiết cho tin tuyển dụng.</CardDescription>
-      </CardHeader>
-      <CardContent>
-        <Form {...form}>
-          <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-8">
-            <div className="grid grid-cols-1 gap-6 md:grid-cols-2">
-                <FormField
-                control={form.control}
-                name="title"
-                render={({ field }) => (
-                    <FormItem>
-                    <FormLabel>Chức danh</FormLabel>
-                    <FormControl>
-                        <Input placeholder="Ví dụ: Senior Python Developer" {...field} />
-                    </FormControl>
-                    <FormMessage />
-                    </FormItem>
-                )}
-                />
-                <FormField
-                control={form.control}
-                name="company"
-                render={({ field }) => (
-                    <FormItem>
-                    <FormLabel>Tên công ty</FormLabel>
-                    <FormControl>
-                        <Input placeholder="Ví dụ: TechCorp Vietnam" {...field} />
-                    </FormControl>
-                    <FormMessage />
-                    </FormItem>
-                )}
-                />
-            </div>
-            
-            <FormField control={form.control} name="slug" render={({ field }) => <Input type="hidden" {...field} />} />
-            <FormField control={form.control} name="user_id" render={({ field }) => <Input type="hidden" {...field} />} />
-
-
-             <div className="grid grid-cols-1 gap-6 md:grid-cols-3">
-                <FormField
-                    control={form.control}
-                    name="location"
-                    render={({ field }) => (
-                        <FormItem>
-                        <FormLabel>Địa điểm</FormLabel>
-                        <FormControl>
-                            <Input placeholder="Ví dụ: Hồ Chí Minh" {...field} />
-                        </FormControl>
-                        <FormMessage />
-                        </FormItem>
-                    )}
-                />
-                <FormField
-                    control={form.control}
-                    name="type"
-                    render={({ field }) => (
-                        <FormItem>
-                            <FormLabel>Loại hình</FormLabel>
-                            <Select onValueChange={field.onChange} defaultValue={field.value}>
-                                <FormControl>
-                                <SelectTrigger>
-                                    <SelectValue placeholder="Chọn loại hình làm việc" />
-                                </SelectTrigger>
-                                </FormControl>
-                                <SelectContent>
-                                    <SelectItem value="Toàn thời gian">Toàn thời gian</SelectItem>
-                                    <SelectItem value="Bán thời gian">Bán thời gian</SelectItem>
-                                    <SelectItem value="Hợp đồng">Hợp đồng</SelectItem>
-                                </SelectContent>
-                            </Select>
-                            <FormMessage />
-                        </FormItem>
-                    )}
-                />
-                 <FormField
-                    control={form.control}
-                    name="category"
-                    render={({ field }) => (
-                        <FormItem>
-                            <FormLabel>Lĩnh vực</FormLabel>
-                             <FormControl>
-                                <Input placeholder="Ví dụ: Backend, Data Science" {...field} />
-                            </FormControl>
-                            <FormMessage />
-                        </FormItem>
-                    )}
-                />
-            </div>
-
-            <FormField
-              control={form.control}
-              name="companyLogoUrl"
-              render={() => (
-                <FormItem>
-                  <FormLabel>Logo công ty</FormLabel>
-                   <FormControl>
-                    <Input type="file" accept="image/*" ref={fileInputRef} onChange={handleFileChange} className="hidden" disabled={isUploading} />
-                  </FormControl>
-                  <div className="flex items-center gap-4">
-                     <Button
-                      type="button"
-                      variant="outline"
-                      onClick={() => fileInputRef.current?.click()}
-                      disabled={isUploading}
-                    >
-                      {isUploading ? <LoaderCircle className="mr-2 h-4 w-4 animate-spin" /> : <Upload className="mr-2 h-4 w-4" />}
-                      {isUploading ? "Đang tải lên..." : "Tải logo lên"}
-                    </Button>
-                    {logoUrlValue && (
-                        <div className="relative h-20 w-20 rounded-md border p-1">
-                            <Image src={logoUrlValue} alt="Preview" fill className="rounded-md object-contain"/>
-                        </div>
-                    )}
-                  </div>
-                  <FormDescription>URL logo sẽ được tự động cập nhật sau khi tải lên.</FormDescription>
-                  <FormMessage />
-                </FormItem>
-              )}
-            />
-
-            <FormField
-              control={form.control}
-              name="companyLogoHint"
-              render={({ field }) => (
-                <FormItem>
-                  <FormLabel>Gợi ý tìm logo (AI Hint)</FormLabel>
-                  <FormControl>
-                    <Input placeholder="Ví dụ: blue bird logo" {...field} />
-                  </FormControl>
-                    <FormDescription>Mô tả ngắn gọn về logo để AI nhận diện (tối đa 2 từ).</FormDescription>
-                  <FormMessage />
-                </FormItem>
-              )}
-            />
-
-            <FormField
-              control={form.control}
-              name="description"
-              render={({ field }) => (
-                <FormItem>
-                  <FormLabel>Mô tả chi tiết</FormLabel>
-                  <FormControl>
-                    <Textarea placeholder="Mô tả chi tiết về công việc, yêu cầu..." className="resize-y min-h-[150px]" {...field} />
-                  </FormControl>
-                  <FormMessage />
-                </FormItem>
-              )}
-            />
-
-
-            <div className="flex justify-end gap-4">
-              <Button type="button" variant="outline" onClick={() => router.back()}>Hủy</Button>
-              <Button type="submit" disabled={isSubmitting || isUploading}>
-                {(isSubmitting || isUploading) && <LoaderCircle className="mr-2 h-4 w-4 animate-spin" />}
-                {isEditMode ? "Lưu thay đổi" : "Tạo việc làm"}
+    <header className="sticky top-0 z-50 w-full border-b bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60">
+      <div className="container flex h-14 items-center">
+        <Link
+          href="/"
+          className="mr-6 flex items-center gap-2"
+          onClick={() => setIsMobileMenuOpen(false)}
+        >
+          <Code2 className="h-6 w-6 text-primary" />
+          <span className="font-bold text-foreground">Python Vietnam</span>
+        </Link>
+        <nav className="hidden items-center gap-2 md:flex">
+          {navLinks.map((link) => (
+            <NavLink key={link.href} {...link} />
+          ))}
+        </nav>
+        <div className="ml-auto hidden items-center gap-2 md:flex">
+          <AuthButton user={currentUser}/>
+        </div>
+        <div className="flex flex-1 items-center justify-end md:hidden">
+           <AuthButton user={currentUser}/>
+          <Sheet open={isMobileMenuOpen} onOpenChange={setIsMobileMenuOpen}>
+            <SheetTrigger asChild>
+              <Button variant="ghost" size="icon">
+                <Menu className="h-5 w-5" />
+                <span className="sr-only">Mở menu</span>
               </Button>
-            </div>
-          </form>
-        </Form>
-      </CardContent>
-    </Card>
+            </SheetTrigger>
+            <SheetContent side="left">
+              <div className="flex h-full flex-col p-4">
+                <Link
+                  href="/"
+                  className="mb-8 flex items-center gap-2"
+                  onClick={() => setIsMobileMenuOpen(false)}
+                >
+                  <Code2 className="h-6 w-6 text-primary" />
+                  <span className="font-bold text-foreground">Python Vietnam</span>
+                </Link>
+                <nav className="flex flex-col gap-2">
+                  {navLinks.map((link) => (
+                    <NavLink key={link.href} {...link} />
+                  ))}
+                </nav>
+              </div>
+            </SheetContent>
+          </Sheet>
+        </div>
+      </div>
+    </header>
   );
 }
