@@ -5,7 +5,8 @@ import { zodResolver } from "@hookform/resolvers/zod";
 import { useRouter } from "next/navigation";
 import { useState, useRef } from "react";
 import Image from "next/image";
-import { jobFormSchema, type JobFormData, type Job, jobCategories } from "@/lib/types";
+import { jobFormSchema, type JobFormData, type Job } from "@/lib/types";
+import { jobCategories } from "@/lib/data";
 import { useToast } from "@/hooks/use-toast";
 import { createJob, updateJob, uploadFile } from "@/app/actions";
 
