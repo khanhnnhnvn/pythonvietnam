@@ -1,0 +1,51 @@
+diff --git a/node_modules/react-quill/lib/index.js b/node_modules/react-quill/lib/index.js
+index 2341492..7043818 100644
+--- a/node_modules/react-quill/lib/index.js
++++ b/node_modules/react-quill/lib/index.js
+@@ -2,7 +2,7 @@
+ 
+ function _interopDefault (ex) { return (ex && (typeof ex === 'object') && 'default' in ex) ? ex['default'] : ex; }
+ 
+-var React = require('react');
++var React = require('react');_interopDefault(React);
+ var PropTypes = _interopDefault(require('prop-types'));
+ var Quill = _interopDefault(require('quill'));
+ var isEqual = _interopDefault(require('lodash/isEqual'));
+@@ -10,6 +10,7 @@
+ var cloneDeep = _interopDefault(require('lodash/cloneDeep'));
+ var Delta = _interopDefault(require('quill-delta'));
+ var ReactDOM = _interopDefault(require('react-dom'));
++var reactDomClient = require('react-dom/client');
+ 
+ function _typeof(obj) {
+   "@babel/helpers - typeof";
+@@ -438,7 +439,7 @@
+ 
+   ReactQuill.prototype.getEditingArea = function getEditingArea() {
+     return ReactDOM.findDOMNode(this.editingArea);
+-  };
++  }; 
+ 
+   ReactQuill.prototype.getEditor = function getEditor() {
+     return this.editor;
+diff --git a/node_modules/react-quill/lib/component.js b/node_modules/react-quill/lib/component.js
+index c733e89..1834f36 100644
+--- a/node_modules/react-quill/lib/component.js
++++ b/node_modules/react-quill/lib/component.js
+@@ -1,5 +1,5 @@
+ import React from 'react';
+-import ReactDOM from 'react-dom';
++import { findDOMNode } from 'react-dom';
+ import PropTypes from 'prop-types';
+ import Quill from 'quill';
+ import isEqual from 'lodash/isEqual';
+@@ -288,7 +288,7 @@
+ 	};
+ 
+ 	getEditingArea = () => {
+-		return ReactDOM.findDOMNode(this.editingArea);
++		return findDOMNode(this.editingArea);
+ 	};
+ 
+ 	getEditor = () => {
+
