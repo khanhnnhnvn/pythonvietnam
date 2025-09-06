@@ -59,7 +59,7 @@ export default function AdminLayout({
     <html lang="vi">
       <body className="font-body antialiased">
         <SidebarProvider>
-          <div className="flex min-h-screen">
+          <div className="flex min-h-screen w-full">
             <Sidebar className="border-r">
               <SidebarContent>
                 <SidebarHeader>
@@ -96,9 +96,9 @@ export default function AdminLayout({
                 </SidebarMenu>
               </SidebarContent>
             </Sidebar>
-            <div className="flex-1">
+            <div className="flex-1 flex flex-col">
               <AdminHeader user={user} />
-              <main className="p-4 sm:p-6 lg:p-8">
+              <main className="flex-1 p-4 sm:p-6 lg:p-8">
                 {children}
               </main>
             </div>
