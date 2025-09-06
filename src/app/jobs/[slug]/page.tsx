@@ -1,17 +1,20 @@
-import { getJobById } from "@/app/actions";
+import { getJobBySlug, getJobs } from "@/app/actions";
 import { notFound } from "next/navigation";
 import Image from "next/image";
 import { Badge } from "@/components/ui/badge";
-import { Briefcase, Clock, MapPin } from "lucide-react";
+import { Briefcase, MapPin } from "lucide-react";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 
-export async function generateMetadata({ params }: { params: { id: string } }) {
-  const id = Number(params.id);
-  if (isNaN(id)) {
-    return { title: "Không tìm thấy việc làm" };
-  }
-  const job = await getJobById(id);
+export async function generateStaticParams() {
+  const jobs = await getJobs();
+  return jobs.map((job) => ({
+    slug: job.slug,
+  }));
+}
+
+export async function generateMetadata({ params }: { params: { slug: string } }) {
+  const job = await getJobBySlug(params.slug);
   if (!job) {
     return {
       title: "Không tìm thấy việc làm",
@@ -24,12 +27,8 @@ export async function generateMetadata({ params }: { params: { id: string } }) {
 }
 
 
-export default async function JobDetailPage({ params }: { params: { id: string }}) {
-    const id = Number(params.id);
-    if (isNaN(id)) {
-        notFound();
-    }
-    const job = await getJobById(id);
+export default async function JobDetailPage({ params }: { params: { slug: string }}) {
+    const job = await getJobBySlug(params.slug);
 
     if (!job) {
         notFound();
@@ -70,7 +69,7 @@ export default async function JobDetailPage({ params }: { params: { id: string }
                 <CardContent>
                     <div className="space-y-4">
                         <h2 className="text-xl font-bold text-primary">Mô tả công việc</h2>
-                        <div className="text-foreground whitespace-pre-line">
+                        <div className="whitespace-pre-line text-foreground">
                             {job.description}
                         </div>
                     </div>

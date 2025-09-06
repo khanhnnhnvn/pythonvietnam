@@ -17,7 +17,7 @@ interface JobCardProps {
 
 export default function JobCard({ job }: JobCardProps) {
   return (
-    <Link href={`/jobs/${job.id}`} className="group block h-full">
+    <Link href={`/jobs/${job.slug}`} className="group block h-full">
       <Card className="flex h-full flex-col items-start gap-4 p-4 transition-all hover:shadow-md group-hover:border-primary/50 md:flex-row md:items-center md:p-6">
         <div className="relative h-16 w-16 flex-shrink-0">
           <Image

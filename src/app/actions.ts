@@ -191,14 +191,11 @@ export async function uploadFile(formData: FormData) {
     const buffer = Buffer.from(await file.arrayBuffer());
     const uploadDir = path.join(process.cwd(), 'public/uploads');
     
-    // Ensure the uploads directory exists
     await fs.mkdir(uploadDir, { recursive: true });
 
-    // Create a unique filename
     const filename = `${Date.now()}-${file.name.replace(/\s/g, '_')}`;
     const filePath = path.join(uploadDir, filename);
 
-    // Write the file to the server
     await fs.writeFile(filePath, buffer);
 
     const fileUrl = `/uploads/${filename}`;
@@ -245,15 +242,31 @@ export async function getJobById(id: number): Promise<Job | null> {
     }
 }
 
+export async function getJobBySlug(slug: string): Promise<Job | null> {
+    let connection;
+    try {
+        connection = await mysql.createConnection(dbConfig);
+        const [rows] = await connection.execute<mysql.RowDataPacket[]>('SELECT * FROM jobs WHERE slug = ?', [slug]);
+        return rows.length > 0 ? rows[0] as Job : null;
+    } catch (error) {
+        console.error(`Failed to fetch job with slug ${slug}:`, error);
+        return null;
+    } finally {
+        if (connection) {
+            await connection.end();
+        }
+    }
+}
+
 export async function createJob(data: JobFormData) {
     let connection;
     try {
         connection = await mysql.createConnection(dbConfig);
         const sql = `
-            INSERT INTO jobs (title, company, location, type, category, description, companyLogoUrl, companyLogoHint)
-            VALUES (?, ?, ?, ?, ?, ?, ?, ?);
+            INSERT INTO jobs (title, slug, company, location, type, category, description, companyLogoUrl, companyLogoHint)
+            VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?);
         `;
-        await connection.execute(sql, [data.title, data.company, data.location, data.type, data.category, data.description, data.companyLogoUrl, data.companyLogoHint]);
+        await connection.execute(sql, [data.title, data.slug, data.company, data.location, data.type, data.category, data.description, data.companyLogoUrl, data.companyLogoHint]);
         return { success: true };
     } catch (error: any) {
         console.error('Failed to create job:', error);
@@ -270,10 +283,10 @@ export async function updateJob(id: number, data: JobFormData) {
     try {
         connection = await mysql.createConnection(dbConfig);
         const sql = `
-            UPDATE jobs SET title = ?, company = ?, location = ?, type = ?, category = ?, description = ?, companyLogoUrl = ?, companyLogoHint = ?
+            UPDATE jobs SET title = ?, slug = ?, company = ?, location = ?, type = ?, category = ?, description = ?, companyLogoUrl = ?, companyLogoHint = ?
             WHERE id = ?;
         `;
-        await connection.execute(sql, [data.title, data.company, data.location, data.type, data.category, data.description, data.companyLogoUrl, data.companyLogoHint, id]);
+        await connection.execute(sql, [data.title, data.slug, data.company, data.location, data.type, data.category, data.description, data.companyLogoUrl, data.companyLogoHint, id]);
         return { success: true };
     } catch (error: any) {
         console.error('Failed to update job:', error);

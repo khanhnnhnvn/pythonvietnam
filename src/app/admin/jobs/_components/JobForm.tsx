@@ -3,12 +3,13 @@
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { useRouter } from "next/navigation";
-import { useState, useRef } from "react";
+import { useState, useRef, useEffect } from "react";
 import Image from "next/image";
 import { jobFormSchema, type JobFormData, type Job } from "@/lib/types";
 import { jobCategories } from "@/lib/data";
 import { useToast } from "@/hooks/use-toast";
 import { createJob, updateJob, uploadFile } from "@/app/actions";
+import { generateSlug } from "@/lib/utils";
 
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
@@ -35,6 +36,7 @@ export default function JobForm({ job }: JobFormProps) {
     resolver: zodResolver(jobFormSchema),
     defaultValues: {
       title: job?.title ?? "",
+      slug: job?.slug ?? "",
       company: job?.company ?? "",
       location: job?.location ?? "",
       type: job?.type ?? 'Toàn thời gian',
@@ -45,7 +47,15 @@ export default function JobForm({ job }: JobFormProps) {
     },
   });
 
+  const titleValue = form.watch("title");
   const logoUrlValue = form.watch("companyLogoUrl");
+
+  useEffect(() => {
+    if (!isEditMode && titleValue) {
+      const slug = generateSlug(titleValue);
+      form.setValue("slug", slug, { shouldValidate: true });
+    }
+  }, [titleValue, isEditMode, form]);
 
   const handleFileChange = async (event: React.ChangeEvent<HTMLInputElement>) => {
     const file = event.target.files?.[0];
@@ -143,6 +153,8 @@ export default function JobForm({ job }: JobFormProps) {
                 />
             </div>
             
+            <FormField control={form.control} name="slug" render={({ field }) => <Input type="hidden" {...field} />} />
+
              <div className="grid grid-cols-1 gap-6 md:grid-cols-3">
                 <FormField
                     control={form.control}
